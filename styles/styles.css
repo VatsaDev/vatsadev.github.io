@@ -1,0 +1,89 @@
+:root {
+  --mint: #20dbae;
+  --skyblue: #6fd1e7;
+  --blue: #6dafed;
+  --textColor: #000000;
+  --font: "Work Sans", sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  box-sizing: border-box;
+  background-color: var(--mint);
+}
+
+.nav-home {
+  overflow: hidden;
+  margin: 20px;
+  padding: 20px;
+  background-color: rgba(26, 194, 130, 0.664);
+  border-radius: 10px;
+}
+
+.nav-home a {
+  float: left;
+  display: block;
+  color: var(--textColor);
+  text-align: center;
+  padding: 0px;
+  margin: 10px;
+  text-decoration: none;
+}
+
+.center {
+  text-align: center;
+  margin: auto;
+}
+
+.header-hero {
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
+    url("../resources/images/backdrop.svg");
+  background-repeat: no-repeat;
+  padding: 60px;
+  text-align: center;
+  background-position: center;
+  background-size: cover;
+  margin: 20px;
+  border-radius: 10px;
+}
+
+.header-hero h1 {
+  font-size: 100px;
+  padding: 60px;
+}
+
+.header-hero p {
+  font-size: 40px;
+}
+
+.header-hero div {
+  background-position: center;
+  background-size: cover;
+  background-color: #00000054;
+}
+
+.main-home {
+  margin: 20px;
+  background-color: rgba(26, 194, 130, 0.664);
+  padding: 20px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.main-home h2 {
+  font-size: 25px;
+}
+
+.projects b{
+  font-size: 20px;
+}
+
+.main-home img {
+  margin: 20;
+}
+
+.main-home a {
+  margin: 20;
+  text-decoration: none;
+}
+
