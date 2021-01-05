@@ -1,88 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- meta -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@700&display=swap"
-    />
     <title>VatsaDev</title>
+    <meta
+      name="google-site-verification"
+      content="96YWg_GlCatD2AqFqJRzo8mGS_1HBe7W2AC3Ci7n0Hc"
+    />
+    <!-- libs external -->
+
+    <!-- my content -->
+    <link rel="stylesheet" href="styles/styles.css" />
     <link
       rel="shortcut icon"
       type="image/x-icon"
       href="resources/images/favicon.svg"
     />
-    <link rel="stylesheet" href="styles/styles.css" />
-    <meta name="google-site-verification" content="96YWg_GlCatD2AqFqJRzo8mGS_1HBe7W2AC3Ci7n0Hc" />
+    <script src="scripts/date.js" defer></script>
   </head>
   <body>
-    <nav class="nav-home">
-      <a href="#home">Home</a>
-      <a href="#projects">projects</a>
-      <a href="#contact">contact</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="pages/projects.html">Projects</a>
     </nav>
-    <header class="header-hero">
-      <img src="resources/images/favicon.svg" alt="logo" />
+    <br /><br />
+    <header class="header">
+      <img src="resources/images/logo.svg" alt="logo" />
       <h1>VatsaDev</h1>
-      <p>minimalist designer | Web developer</p>
     </header>
-    <main class="main-home">
-      <h2 id="home"><u>Welcome to VatsaDev</u></h2>
-      <p>The Next hub of tech</p>
-      <p>
-        welcome, I am VatsaDev, minimalist designer and developer of this
-        website. <br />
-        I like design minimalistic app and websites, and pixel art games
-      </p>
-      <p>check out my work below</p>
-      <h2 id="projects"><u>Products</u></h2>
-      <div class="projects">
-        <ul type="disc">
-          <h3>Products</h3>
-          <li>&#10024;<b>Vlabs</b> - The codepen clone</li>
-          <li>
-            &#10024;<b>Simple.js</b> - The library to make javascript Simple
-          </li>
-          <h3>Other</h3>
-          <li>Kiwi.org - A practice site</li>
-          <li>Moonshot - text adventure Game</li>
-          <li>DxBall - breakout clone</li>
-          <li>Collect the stars - a simple arcade game</li>
-        </ul>
-        get all of this at my github account
+    <section class="section">
+      <h1>Hi, I'm VatsaDev!</h1>
+      <p>I'm VatsaDev, a student learning the MERN stack</p>
+      <p>I like using the front end more, but the backend is fun too!</p>
+      <p>Wanna Talk?, reach me here.</p>
+      <div class="social-card">
+        <a href="https://github.com/vatsadev">
+          <img
+            src="resources/images/octoface.svg"
+            alt="github"
+            width="75px"
+            height="75px"
+            align="top"
+        /></a>
+        <a href="mailto:vatsapandey123@gmail.com" target="_blank">
+          <img
+            src="resources/images/gmail.png"
+            alt="gmail"
+            width="95px"
+            height="95px"
+            style="display: inline-block"
+            align="top"
+          />
+        </a>
       </div>
-      <h2 id="contact"><u>Contact</u></h2>
-      <a href="https://github.com/VatsaDev">
-        <img src="resources/images/GitHub-Mark-Light-64px.png" />
-      </a>
-      &nbsp
-      &nbsp
-      <a href="https://gitlab.com/VatsaDev">
-        <img src="resources/images/gitlab.png" height="64" width="64" />
-      </a>
-      &nbsp
-      &nbsp
-      <a href="mailto:vatsapandey234@gmail.com" target="_blank">
-        <img src="resources/images/gmail.png" height="64" width="64" />
-      </a>
-      &nbsp
-      &nbsp
-      <a href="https://codepen.io/vatsadev">
-        <img src="resources/images/codepen.png" width="64" height="64" />
-      </a>
-      &nbsp
-      &nbsp
-    </main>
-    <script src="https://utteranc.es/client.js"
-        repo="VatsaDev/vatsadev.github.io"
-        issue-term="pathname"
-        theme="github-light"
-        crossorigin="anonymous"
-        async>
-</script>
-    <footer>
-      ©VatsaDev 2020, all rights reserved
-    </footer>
+    </section>
+    <section class="section">
+      © VatsaDev
+      <p style="display: inline-block" id="year"></p>
+      , all rights reserved
+    </section>
+    <script
+      src="https://utteranc.es/client.js"
+      repo="VatsaDev/vatsadev.github.io"
+      issue-term="pathname"
+      theme="dark-blue"
+      crossorigin="anonymous"
+      async
+    ></script>
   </body>
 </html>
