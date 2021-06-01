@@ -10,64 +10,70 @@
       content="96YWg_GlCatD2AqFqJRzo8mGS_1HBe7W2AC3Ci7n0Hc"
     />
     <!-- libs external -->
-
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+      integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+      crossorigin="anonymous"
+    />
     <!-- my content -->
-    <link rel="stylesheet" href="styles/styles.css" />
     <link
       rel="shortcut icon"
       type="image/x-icon"
-      href="resources/images/favicon.svg"
+      href="resources/favicon.svg"
     />
-    <script src="scripts/date.js" defer></script>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/home.css" />
   </head>
   <body>
-    <nav class="nav">
-      <a href="index.html">Home</a>
-      <a href="pages/projects.html">Projects</a>
+    <nav class="nav" id="nav">
+      <a href="#about">About</a><br />
+      <a href="https://vatsadev.hashnode.dev/">Blog</a><br />
+      <a href="projects.html">Projects</a><br />
+      <br /><br />
+      <a href="https://github.com/VatsaDev"><i class="fab fa-github"></i></a>
+      <a href="mailto:vatsapandey123@gmail.com"
+        ><i class="fab fa-google"></i
+      ></a>
+      <a href="https://vatsadev.hashnode.dev/"><i class="fas fa-blog"></i></a>
     </nav>
-    <br /><br />
-    <header class="header">
-      <img src="resources/images/logo.svg" alt="logo" />
-      <h1>VatsaDev</h1>
-    </header>
-    <section class="section">
-      <h1>Hi, I'm VatsaDev!</h1>
-      <p>I'm VatsaDev, a student learning the MERN stack</p>
-      <p>I like using the front end more, but the backend is fun too!</p>
-      <p>Wanna Talk?, reach me here.</p>
-      <div class="social-card">
-        <a href="https://github.com/vatsadev">
-          <img
-            src="resources/images/octoface.svg"
-            alt="github"
-            width="75px"
-            height="75px"
-            align="top"
-        /></a>
-        <a href="mailto:vatsapandey123@gmail.com" target="_blank">
-          <img
-            src="resources/images/gmail.png"
-            alt="gmail"
-            width="95px"
-            height="95px"
-            style="display: inline-block"
-            align="top"
-          />
-        </a>
-      </div>
-    </section>
-    <section class="section">
-      © VatsaDev
-      <p style="display: inline-block" id="year"></p>
-      , all rights reserved
-    </section>
-    <script
-      src="https://utteranc.es/client.js"
-      repo="VatsaDev/vatsadev.github.io"
-      issue-term="pathname"
-      theme="dark-blue"
-      crossorigin="anonymous"
-      async
-    ></script>
+    <div class="main">
+      <header class="main-header">
+        <h1>VatsaDev</h1>
+        <div class="logo" width="500px" height="500px"></div>
+        <h3>Student • Programmer • Idealist</h3>
+      </header>
+      <main>
+        <section class="card" id="about">
+          <h2>Hi, I'm Vatsa!</h2>
+          <p>
+            Hi, I'm Vatsa, a student web developer!<br />
+            I like working On open source projects and fun apps! I'm intrigued
+            by blockchain and crypto!
+          </p>
+          <h3>My skills</h3>
+          <p>
+           learning - nodejs, typescript, react, react native,
+            nextjs and solidity.
+          </p>
+        </section>
+        <section class="card mobile">
+          <h2>Links</h2>
+          <a href="https://vatsadev.hashnode.dev/">Blog</a><br />
+          <a href="projects.html">Projects</a><br />
+          <br /><br />
+          <a href="https://github.com/VatsaDev"
+            ><i class="fab fa-github"></i
+          ></a>
+          <a href="mailto:vatsapandey123@gmail.com"
+            ><i class="fab fa-google"></i
+          ></a>
+          <a href="https://medium.com/@vatsadev"><i class="fas fa-blog"></i></a>
+        </section>
+        <section class="card" id="footer">
+          <h2>© VatsaDev, 2020-present, all rights reserved</h2>
+        </section>
+      </main>
+    </div>
   </body>
 </html>
