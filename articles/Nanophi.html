@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>NanoPhi: Replicating parts of Phi-1.5</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+    </head>
+    <body>
+        <h1>Replicating some of the success Phi-1.5 with NanoPhi</h1>
+        <p>When I started the NanoPhi project, I had clear goals</p>
+        <ul>
+            <li>Using Phi-like data, textbooks</li>
+            <li>Using a Model in the 300-400m parameter range</li>
+            <li>Testing whether Censorship really affected a model</li>
+        </ul>
+        <p>
+            For My model, I chose GPT-2 Medium, a 350m Parameter model, which I
+            finetuned and inferenced on the NanoGPT repository. It was easy to
+            get started, as I'm familiar with the codebase, and I've made custom
+            changes, optimizations and Bugfixes to the setup.
+        </p>
+        <p>
+            When It came to data, I started the way every project Replicating
+            Phi-1.5 does: Textbooks. Two Great Starter Datasets are Nampdn's
+            Tiny Textbooks, Along with the Sciphi dataset, and finetuning on
+            just those two resulted in a huge performance increase. For one,
+            it's refreshing to see the likes of GPT-2 small and medium go from
+            simple sentence competition to textbook generators, a massive
+            performance boost. Train and Val loss on finetuned downstream tasks
+            were also unusually low, at around 0.71 and 0.74, possibly because
+            the data was well structured, and very low noise.
+        </p>
+        <p>
+            Phi-1.5 also has other tasks, and It was quite interesting to try
+            and Finetune a model on multitask data at the 300m scale, especially
+            how the model still tends to cope well with 5 different varied
+            tasks, Math, Code, Logic, Roleplay and Textbooks.
+        </p>
+        <p>
+            For the model, textbooks and roleplay were low-hanging fruit, as it
+            could make textbooks and roleplay on novelty ideas, with less data
+            compared to other categories, like asking for a textbook on "Lotuses
+            and Ninja arts", where the textbook produced an instruction manual
+            and QA on the usage of Lotuses by Ninja, whereas the roleplay
+            described a moonlit pool, a dark ninja, and a precious lotus.
+        </p>
+        <p>
+            Code, Math, and Logic did not go so well. Initially, Logic was first
+            seen as an emergent ability after training on textbooks gave the
+            model basic Inductive Reasoning, like "If Beavers live in Dams and
+            Dams are built on rivers, the Beavers must live in rivers." Further
+            Usage of datasets like Open Platypus, did not provide much of an
+            Improvement, but the model did start outputting small amounts of
+            Legible Latex, and could probably produce more complex equations.
+        </p>
+        <p>
+            The Code parts of the NanoPhi Project are underutilized. The Model
+            would probably be much better off if I happened to use a structured
+            approach like the NanoPhi Paper. The current dataset simply uses
+            ~5GB of code search net, yet this dataset is too advanced for the
+            Level that this model is being trained for. Due to the mixture of
+            Noisy Data and GPU constraints, the Model is weak at the basics of
+            code and is weak at non-trivial code.
+        </p>
+        <p>Math is affected by several reasons, including</p>
+        <ul>
+            <li>
+                bad base model. GPT-2s tokenizer isn't for numbers, and has few
+                code tokens, so it may have been a bad Idea to start from this
+                model, but I can't pretrain on a better tokenizer like GPT-4, so
+                I'm stuck with this one
+            </li>
+            <li>
+                I may have saturated the amount of tasks the model can handle.
+                No one has tried Teaching models of this size for multiple
+                diverse domain tasks, and this may be the limit. However, if
+                this were the case, then all the tasks would be worse off, but
+                previous tasks are still performant at the same level.
+            </li>
+            <li>
+                Size Difficulties. As the GPT-3 paper said "LLMs are Generalist
+                Engines" However, I'm nowhere near that size. Math, code, and
+                logic might just be beyond the capabilities of these model
+                scales.
+            </li>
+        </ul>
+        <p>
+            For My work, Censorship did affect model Quality. While this could
+            just be a side effect of my data choices, after incorporating the
+            Pippa Dataset into the Model, its other writing skills grew
+            significantly, with the model incorporating more sensory details and
+            having a more coherent story, more spatially accurate, better In
+            general. You could probably Achieve similar with a curated writing
+            dataset, perhaps those offered by Palmyra. The Pippa Data also helps
+            make the model good at POV and Spatial Human Body Anatomy, as the
+            positions of characters tend to make sense, with arms, heads and
+            legs all in the right places. (perhaps those sus c.ai chats are
+            useful after all 😉)
+        </p>
+        <p>
+            But the coolest thing I found, is that the model creates its own
+            tag, a custom task, which It calls [asy]. I don't see it in the
+            training data, but it seems to mean a mixture of code and math, and
+            it often shows up at the ends of Code and math ans. When You prompt
+            Code for math or use [asy] instead of [Math], the model seems to
+            perform better.
+        </p>
+        <p>I would expand this work towards:</p>
+        <ul>
+            <li>Working with this Data in longer context lens</li>
+            <li>
+                Observe more Multitask data, Grokking Curves, and emergent
+                capabilities
+            </li>
+            <li>Pretraining on this data, or multi-epoch training</li>
+            <li>Replicating OS phi-1 coding dataset</li>
+            <li>
+                Finetuning Larger Models to Increase factual knowledge and
+                better formatting.
+            </li>
+        </ul>
+    </body>
+</html>

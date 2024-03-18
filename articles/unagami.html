@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Unagami, A Mainstream-like LLM, in 350 million parameters</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+    </head>
+
+    <body>
+        <h1>Unagami, A Mainstream-like LLM, in 350 million parameters</h1>
+        <p>
+            As LLMs get larger and larger, they become more and more exclusivist
+            in who can host them, or use them for their own purposes. There is a
+            big difference between those who can host ChatGPT or Falcon-180B,
+            versus those who can host Llama2–7b or have to quantize all the
+            models they want to use. Unagami, on the other hand, is designed to
+            be used however you want to use it. All you have to do is get a free
+            colab gpu instance, and you’re good to go.
+        </p>
+        <p>
+            Tiny models have other advantages too. As the tiny stories paper
+            proved, a tiny LLM for a singular, more focused task, can be just as
+            good as a Full Scale LLM doing the same task. Right now, the current
+            Unagami model is just a GPT-2 fine tuned for general informational
+            conversational Data. Its pretty hallucinatory and tends to give
+            statements that are half right/half wrong, or statements that are
+            slightly warped. This can all be changed with more finetuning
+            though. Want a code model? Just set up a big .txt full of code, tag
+            it how you want, and give it to the model, and you’re good!
+        </p>
+        <p>
+            GPT-2 just predicts the next couple of tokens. turning this into a
+            chat models involves 4 important tokens. system, human, bot, and
+            endOfText. It uses the OASST format from there.
+        </p>
+        <p>
+            A model like Unagami has only 350 million parameters, so all its
+            system prompts are pretty basic, not like the creative context one
+            might see with larger models. The most common is "You are Unagami,
+            an AI developed to by Vatsadev to help others". There are some
+            others like "You are a mathematician"" or "You are a creative
+            author", but a model of this size can’t understand complex or
+            diverse system prompts as well.
+        </p>
+        <p>
+            Another benefit of the system prompt is that the bot sounds self
+            aware, refers to itself by name when asked, and often mentions me as
+            its developer. It will also refer to itself as an AI or LLM on
+            occasion. For similar behaviour with your LLM, take a look at the
+            moss dataset.
+        </p>
+        <p>
+            There are plenty of great Datasets available for an informational,
+            mainstream LLM. Some really good ones include the OpenOrca dataset,
+            or for practice with less hallucinations, trying including a dataset
+            like SQUAD for the context based answering, as that involves
+            responding factually.
+        </p>
+        <p>
+            This model could probably be better, and heres some measures I wont
+            be adding, but would recommend to anyone trying to build on this
+            model
+        </p>
+        <p>
+            More data → If you can get more data, get more data in. The models
+            currently based off 5 billion tokens, try to add more, 10–20
+            billion.
+        </p>
+        <p>
+            Better Math and logic reasoning → While the model has some great
+            logic and math datasets, adding more, or basing the model in
+            transforming math to code then giving the answer, that would help.
+        </p>
+        <p>
+            More Multilingual Data → The model does have data in many languages,
+            but it isn’t that good for language translation or languages outside
+            english, that's a big work point for global user base LLMs.
+        </p>
+        <p>
+            Multimodality or Websearch/Realtime → Both these features would
+            expand its capabilities and make it more useable. The Web Search
+            functionality could be combined with the context capabilities to get
+            factual, up-to-date answers. Multimodality would probably require an
+            architecture change, but an interesting approach I found was that if
+            you raise the context length, you might be able to give the LLM
+            base64 image urls, and their summaries.
+        </p>
+    </body>
+</html>

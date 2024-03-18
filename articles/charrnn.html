@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Entering the LLM world with RNNs: CharRNN</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+    </head>
+
+    <body>
+        <h1>Entering the LLM world with RNNs: CharRNN</h1>
+        <p>
+            Recurrent neural networks (RNNs) are a type of artificial
+            intelligence system that is modeled loosely after the neurons in the
+            human brain. They are trained to process sequences of information,
+            like words in a sentence or audio signals over time.
+        </p>
+        <p>
+            RNNs Have Advantages over the usual transformer, with the main
+            specialty being that the memory usage remains stable at bigger
+            context lengths. A context length of 1024 tokens, and 100k tokens,
+            would use similar memory.
+        </p>
+        <p>
+            The tricky part with RNNs is getting stable with large context
+            lengths, as RNNs issues like the Vanishing gradient problem, which
+            can destroy benefits of large context lengths
+        </p>
+        <p>
+            I decided to try and RNNs to the test with CharRNN, a 140 line
+            python implementation of an RNN by Andrej Karpathy.
+        </p>
+        <p>
+            The first attempt was for CharRNN with my NanoChatGPT dataset, and
+            for CharRNN, the tokenizer size was around 9000 for all unique
+            unicode characters. There were three Hyperparameters, Hidden Size,
+            learning rate, and sequence length. the default values were
+            100(Hidden Size), 1e-1(Learning Rate), and 25(sequence length). I
+            set the values 150, 2e-1, and left the 25 be.
+        </p>
+        <p>
+            The model started out with a loss of 233.48, absolute Gibberish,
+            with random japanese characters and emojis everywhere.
+        </p>
+        <ul>
+            <li>
+                at around 200 steps (loss 216.58), the model starts making
+                spaces between long sentences, making some progress
+            </li>
+            <li>
+                at around 600 steps (loss 176.44), the model starts trying to
+                make the most common part of the dataset, the token tags, making
+                parts like e> or et
+            </li>
+            <li>
+                at 2000 steps (loss 102.1), the model starts making a lot of the
+                endOftext token, with endOf or similar like endingT>
+            </li>
+            <li>
+                at 5500 steps (loss 55.91), the model starts making most of the
+                endOfText token, with an attempt like endOftex
+            </li>
+            <li>
+                at 6000 steps (loss 53.4), the model starts using the other two
+                tokens, for human and bot, with hu>, or bot>
+            </li>
+            <li>
+                at 7000 steps (loss 50.2), the model uses mostly english
+                characters, and actually starts trying to use the dataset
+                format, of human, then bot, etc.
+            </li>
+            <li>
+                at 8000 steps (loss 48.34), the model starts forming small
+                english words, like I, am, you, etc
+            </li>
+            <li>
+                at 9000 steps (loss 47.05), the models reached a point where its
+                hit or miss with the format, either making the format, or
+                failing to make the format
+            </li>
+            <li>
+                at 10000 steps (loss 46.84), the model starts using the human
+                eot then bot eot format, but the sentences inside are still
+                garbage, and it might just give two or 3 human sentences at a
+                time, then a bot sentence.
+            </li>
+            <li>
+                at 11000 steps (loss 45.46), the models keeps to the human
+                sentence then bot sentence format.
+            </li>
+            <li>
+                at 15000 steps (loss 43.44), the model starts making jumbled
+                versions of common phrases, like “hello my name is” or “how are
+                you?”
+            </li>
+            <li>
+                at 20000 steps (loss 41.96), the model starts making 5+ letter
+                words, like there, or believe.
+            </li>
+        </ul>
+        <p>
+            I stopped the run after 30000 steps, as the loss curve went upwards
+            for the last 6000 steps, with the last drop in loss at 24K.
+        </p>
+        <img src="../images/rnn_loss.webp" />
+        <p>
+            The NanoChatGPT Dataset is based of text data, data from online
+            forums, reddit, and other similar stuff, making it really noisy. I
+            tried this again with the oasst Guanaco Dataset, far less noisy.
+        </p>
+        <p>
+            This run was not as successful, and the loss went up after 5000
+            steps, when loss was still at 98.01. Another run with a very Low
+            learning rate, 1e-5, was only slightly different, upturning at 3000
+            steps, but at a loss of 85.81.
+        </p>
+        <p>
+            One hypothesis I did have on this was that the models simply
+            couldn’t get used to the step that the NanoChatGPT run made it till,
+            and that was using mainly english, and using less emojis and
+            chinese/japanese characters. I made a new run, this time on the
+            English quotes dataset, and was slightly more successful, this run
+            upturned in loss after 14000 steps, at a loss of 78.1 .
+        </p>
+        <p>
+            After trying a variety of hyperparameter tunes, none of them getting
+            better than the original NanoChatGPT run, I decided to try it with
+            Karpathy’s own Tiny Shakespeare Dataset, where I got to a loss of
+            48.01 at 100000 steps, before a huge upturn in loss, pushing loss up
+            to 200 again.
+        </p>
+        <p>
+            Well we live in 2023, and we have much better tokenization than
+            character level tokenization. Changing the script to include
+            TikToken was a better idea. The model started with complete words
+            from the beginning, although they made no sense. By 1300 steps loss
+            was coming out better than any other run so far, at 74.47, steadily
+            decreasing the whole time. by 2000 steps, it was still steadily
+            decreasing at a loss of 40.7, a loss of 26.11 by 2500 steps. At step
+            4000, we reach a loss of 8.6. The run finally stalled at 8000
+            iterations, interchanging between 3.83 and 3.85.
+        </p>
+        <p>
+            In the end, the model could make shakespeare formatted sentences,
+            with some real words and some gibberish, though the sentence
+            wouldn’t make any grammatical sense. This research run proved
+            fruitful in figuring out how RNNs work and tweaking around with
+            them. For a more serious approach, I would probably try to work with
+            the official Andrej Karpathy CharRNN lua script, although its
+            outdated lua, it has support for checkpoints, stronger sampling, and
+            GPUs, but for LLMs, RWKV-LM is the most powerful out there right
+            now, fully functional, and fairly powerful.
+        </p>
+        <p>
+            Colab to the project:
+            https://colab.research.google.com/drive/1hIfLGBlauuDq1fsEPVrxnI9CiLLwZyL6?usp=sharing
+        </p>
+    </body>
+</html>

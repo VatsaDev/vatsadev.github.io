@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>2D minecraft, for the Web</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+    </head>
+    <body>
+        <h1>2D minecraft, for the Web</h1>
+        <p>
+            Minecraft recently came out with Minecraft 1.20: the Tales & Trails
+            update, with a focus on the player's story and expression, and all
+            of this jogged up my annual Minecraft fever, and I played the very
+            first snapshots for a while, before going down to look at what made
+            Minecraft mechanics work, and this turned into a nice foray into
+            html5 game development
+            <br /><br />
+            project link:
+            <a href="https://paperambi.glitch.me/"
+                >https://paperambi.glitch.me/</a
+            >
+        </p>
+        <h2>The Game</h2>
+        <p>
+            While I originally just wanted to replicate Minecraft, I saw it as
+            more of an opportunity to go building my own sandbox game. In terms
+            of original concept art, my best was just basing it off the Minecon
+            visuals and turning them into a game, I did my best with my artistic
+            skills
+        </p>
+        <h2>A self-made map versus procedural generation</h2>
+        <p>
+            When I was making the world, I had two options: procedural
+            generation like Minecraft, or a self-made map, like ARK. When I
+            looked at procedural generation in phaser, I saw one tutorial on a
+            flat face-down procedural, and nothing on the vertical top-down
+            world I was looking for. So I chose to make my map in Tiled, and
+            exported it to phaser. The programming and rendering of it was
+            really simple,
+        </p>
+        <pre><code>
+            this.map = this.make.tilemap({ key: "map" });
+            this.tiles = this.map.addTilesetImage("Tileset", "Tileset");
+            this.backgroundLayer = this.map.createLayer("Background", this.tiles, 0, 0);
+            this.worldLayer = this.map.createLayer("Block", this.tiles, 0, 0);
+            this.worldLayer.setCollisionByProperty({ collides: true });
+        </code></pre>
+        <p>
+            Bring the JSON tiled export and tileset into your assets, preload
+            them into Phaser, then declare the map and tileset. After that, just
+            create each layer and enable the collisions, which you can do by
+            setting the custom property in Tiled.
+        </p>
+        <h2>The Main Character</h2>
+        <p>
+            The main character is just a simple phaser platformer character,
+            with arrow key/space bar based movement, with a physics collider. He
+            has spritesheet based animations
+        </p>
+        <h2>Mobs</h2>
+        <p>
+            The only mob in the game is chickens, only interactable through
+            physics based means, no hitting/damage. They have a simple random
+            movement AI.
+        </p>
+        <h2>Placing/removing blocks</h2>
+        <p>The placing and removing blocks system follows simple steps:</p>
+        <ul>
+            <li>Check whether trying to place or remove block</li>
+            <li>Check tile id and whether tile is inbounds</li>
+            <li>Update inventory, and Update Weight</li>
+        </ul>
+        <p>The tile ID is just the ID of the in its tileset</p>
+        <h2>The Inventory and UI</h2>
+        <p>
+            The inventory is an array, changed by the placing and removing block
+            functions, which is taken and rendered in the HTML UI. All the UI is
+            just a Layer of html on top of the phaser game, with query selectors
+            on all elements.
+        </p>
+        <h2>Fall damage</h2>
+        <p>
+            This was hard to calculate, as I couldn't use air time or distance
+            travelled in air, as the character speeds up while falling, like
+            realistic physics, so the best method I got was the velocity of the
+            character, with a higher velocity resulting in higher fall damage.
+        </p>
+        <h2>Conclusion</h2>
+        <p>
+            While I've gone as far as I will with this game, Its open source,
+            and I encourage others to take the code and make better sandbox
+            games.
+            <a href="https://glitch.com/~paperambi"
+                >https://glitch.com/~paperambi(code)</a
+            >
+        </p>
+    </body>
+</html>
