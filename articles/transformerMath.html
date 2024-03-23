@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Transformers learn patterns, math is patterns</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+        <link
+            rel="shortcut icon"
+            href="../images/Favicon.png"
+            type="image/x-icon"
+        />
+    </head>
+
+    <body>
+        <h1
+            id="transformers-learn-patterns-math-is-patterns-aka-making-transformers-do-math"
+        >
+            Transformers learn patterns, math is patterns, AKA making
+            transformers do math
+        </h1>
+        <h2 id="intro">Intro</h2>
+        <p>
+            In my NanoPhi Project, I talked about how the model trained on
+            textbooks had some basic math capabilities, the plus one pattern, or
+            one digit addition working part of the time. While math wasn&#39;t
+            the focus of that project, I saw several flaws in the model being
+            able to learn math at all, from dataset to tokenizer. This time, I
+            worked with minimal sized transformers from the ground up, to prove
+            that they can learn math, and if you&#39;re model can&#39;t, its
+            just a you skill issue.
+        </p>
+        <p>
+            To reiterate the title, most math, especially arithmetic, comes from
+            a function, which is obviously a pattern. A transformer, like any
+            neural net, gets inputs and outputs, while trying to reverse
+            engineer the algorithim that made them. I also initally planned to
+            do this with RNNs and use the turing machiene interprability
+            message, but vanilla RNNs hate me, and spiked into a ~27 loss 10
+            steps into training, so back to transformers!
+        </p>
+        <h2 id="proof-of-concept">Proof of concept</h2>
+        <p>
+            To start off with a proof of concept, I decided to train a 2 mil
+            parameter +1 model, by quickly using a random number generator I
+            made in C (started learning it recently, surprised at how much
+            faster it was writing things to the disk in comparison to python, I
+            finish generating all the datasets used in this in C before python
+            made the first one, the python bloat is real) to make a text file
+            with about 100k examples in the format x + 1 = (x+1).
+        </p>
+        <p>
+            A nice benefit of arithmetic is that you can do it all in like 17
+            chars, so with a default embeding size of 360, each embedding would
+            have crazy expressivity, and I wouldnt be surprised by the
+            embeddings storing random statistics about the tokens themselves at
+            that point, but that would need interprebility research I can&#39;t
+            really do.
+        </p>
+        <p>
+            The training run starts, loss drops to 0.0425 in 10 steps, before
+            settling at ~0.03 after 100 steps. An intresting observation to make
+            here is that all of these come from very simple math functions, and
+            so it wouldnt be surprising for loss to drop right to zero, but NNs
+            can probably only reach a certain minimum before being hurt by
+            random samping and temp, along with randomness in other spots.
+        </p>
+        <p>Practically perfect, greedy sampling here:</p>
+        <pre><code><span class="hljs-number">4719</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4720</span>
+<span class="hljs-number">4720</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4721</span>
+<span class="hljs-number">4721</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4722</span>
+<span class="hljs-number">4722</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4723</span>
+<span class="hljs-number">4723</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4724</span>
+<span class="hljs-number">4448</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4449</span>
+<span class="hljs-number">4449</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4450</span>
+<span class="hljs-number">4450</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4451</span>
+<span class="hljs-number">4451</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4452</span>
+<span class="hljs-number">4452</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4453</span>
+<span class="hljs-number">4453</span>+<span class="hljs-number">1</span>=<span class="hljs-number">4454</span>
+</code></pre>
+        <p>
+            Heres the loss curve as an example:
+            <img src="../images/x+1-graph.png" alt="Loss curve" />
+        </p>
+        <p>
+            Before moving on to the other parts of arithmetic, its important to
+            mention that I made this dataset in the literally easiest way
+            possible, and it could be better in several ways, the fact that
+            models learn off these datasets is a testament to the learning
+            abilities of NNs
+        </p>
+        <h2 id="arithmetic-operations">arithmetic operations</h2>
+        <p>
+            Each of the arithmetic operations(add/sub/mul/div) has 100 million
+            examples, or 1.3B tokens
+        </p>
+        <p>
+            I expected a higher loss for addition, but after seeing the +1 proof
+            drop that fast, I expected a 0.05 for good addition, yet got a loss
+            of 1.3 in 2k iters, and eventually flatlined at 1.1 after 5k steps
+        </p>
+        <p>After sampling it, I got this:</p>
+        <pre><code><span class="hljs-number">6719</span>+<span class="hljs-number">6207</span>=<span class="hljs-number">12926</span>
+<span class="hljs-number">9472</span>+<span class="hljs-number">8559</span>=<span class="hljs-number">18031</span>
+<span class="hljs-number">8079</span>+<span class="hljs-number">3103</span>=<span class="hljs-number">11182</span>
+<span class="hljs-number">9483</span>+<span class="hljs-number">9138</span>=<span class="hljs-number">18621</span>
+<span class="hljs-number">8133</span>+<span class="hljs-number">6652</span>=<span class="hljs-number">14785</span>
+<span class="hljs-number">5478</span>+<span class="hljs-number">4446</span>=<span class="hljs-number">9924</span>
+<span class="hljs-number">4076</span>+<span class="hljs-number">3936</span>=<span class="hljs-number">7012</span>
+<span class="hljs-number">1599</span>+<span class="hljs-number">7550</span>=<span class="hljs-number">9049</span>
+<span class="hljs-number">4721</span>+<span class="hljs-number">7543</span>=<span class="hljs-number">12264</span>
+<span class="hljs-number">8487</span>+<span class="hljs-number">4040</span>=<span class="hljs-number">12527</span>
+<span class="hljs-number">6258</span>+<span class="hljs-number">8013</span>=<span class="hljs-number">14271</span>
+<span class="hljs-number">4860</span>+<span class="hljs-number">8373</span>=<span class="hljs-number">13233</span>
+<span class="hljs-number">1286</span>+<span class="hljs-number">8721</span>=<span class="hljs-number">10007</span>
+<span class="hljs-number">298</span>+<span class="hljs-number">9025</span>=<span class="hljs-number">9323</span>
+</code></pre>
+        <p>
+            Mostly correct, 3/4/5 digit math, imagine being claude sonnet and
+            failing a couple
+        </p>
+        <p>
+            Moving on to subtraction, I expected a slighlty higher loss from the
+            positive and negative numbers being possible, but after 5k steps it
+            was a ~1.3, and most subtraction was 10-100, or a digit switch
+            somewhere in the answer
+        </p>
+        <p>
+            In an experiemnt, busted up the embedding table dimensions to 1000,
+            got a 120m model that fit in 1 GPU for training, also while 64k tok
+            per step, and it managed to make 1.24 loss before flatlining.
+        </p>
+        <p>
+            The model showed some intresting behaviour, including digit
+            approximation, where as the loss got lower, more digits tended to be
+            correct per answer, from the thousands place onwards, with the last
+            outs near the flatline started getting the 10s and 1s somewhat
+            accurate.
+        </p>
+        <p>
+            Subtraction in general just appears to be alot slower in grokking
+            than addition or plus one, though one would consider add/sub to be
+            equally difficult.
+        </p>
+        <p>
+            Starting multiplication, I expected it to be as difficult as
+            subtraction, but it was surprisingly easier, with a quick loss drop
+            to ~1.6 at 2k steps, and flatlined at ~1.48 (5k steps)
+        </p>
+        <p>Some quick examples:</p>
+        <pre><code><span class="hljs-number">680</span>*<span class="hljs-number">258</span>=<span class="hljs-number">173440</span>, its just <span class="hljs-number">1</span> digit off here, real answer is <span class="hljs-number">175440</span>
+
+<span class="hljs-number">7412</span>*<span class="hljs-number">2528</span>=<span class="hljs-number">18716036</span>, figuring out multiplication, getting initial/final digits right
+
+<span class="hljs-number">12</span>*<span class="hljs-number">1307</span>=<span class="hljs-number">9162084</span>, shows that data mixture is important. Its seen too many <span class="hljs-number">4</span> digit * that it cant do a <span class="hljs-number">2</span>x4
+</code></pre>
+        <p>
+            Continued pretraining for 10k steps now, which is needed, even 200
+            more steps just dropped val loss. A loss of ~1 or ~1.2 would be
+            amazing to see, as I believe that should cover the most digits being
+            correct but a couple off issue. After 5.75k steps train/val at
+            1.4424/1.4427, jumped the learning rate, dropped to 1.43, and
+            further lr jumps got final loss 1.27. Another continued pretrain
+            before a full flatline at 1.23.
+        </p>
+        <p>some samples:</p>
+        <pre><code><span class="hljs-number">9137</span>*<span class="hljs-number">7041</span>=<span class="hljs-number">64313517</span>
+<span class="hljs-number">9636</span>*<span class="hljs-number">494</span>=<span class="hljs-number">4768184</span>
+<span class="hljs-number">2498</span>*<span class="hljs-number">8702</span>=<span class="hljs-number">21767596</span>
+<span class="hljs-number">1066</span>*<span class="hljs-number">1771</span>=<span class="hljs-number">1888986</span>
+<span class="hljs-number">1436</span>*<span class="hljs-number">7526</span>=<span class="hljs-number">10773336</span>
+<span class="hljs-number">1647</span>*<span class="hljs-number">7441</span>=<span class="hljs-number">12243327</span>
+<span class="hljs-number">5292</span>*<span class="hljs-number">9925</span>=<span class="hljs-number">52564100</span>
+<span class="hljs-number">7315</span>*<span class="hljs-number">2265</span>=<span class="hljs-number">16606475</span>
+<span class="hljs-number">2900</span>*<span class="hljs-number">9956</span>=<span class="hljs-number">2980240</span>
+</code></pre>
+        <p>
+            trying out fewshot with the multiplication model, it kinda worked,
+            after 4 shots, it got 1 right and 1 wrong most of the time, so it
+            can fewshot 50% acc.
+        </p>
+        <p>
+            most of them just have their middle digits off now, a bigger model,
+            like 40m will probably solve this through scale
+        </p>
+        <p>
+            division, the hardest one of them all, was much slower to learn with
+            a higher loss, also extra difficulty here, due to large floating
+            point answers. It has the highest initial loss aswell (2.8 vs 2.5
+            for the others)
+        </p>
+        <p>
+            Its really slow to train, and the outputs are pure noise, it
+            can&#39;t learn it at all
+        </p>
+        <p>
+            On a side note, in all the tasks, the difficulty comes in predicting
+            the middle digits of the answer, which im not sure if its just the
+            most difficult part, or has something todo with transformers lost in
+            the middle issue.
+        </p>
+        <h2 id="figuring-it-out-rasp-and-transformers">
+            Figuring it out, RASP and transformers
+        </h2>
+        <p>
+            Trying to look into interperability/why this happens, found the RASP
+            paper, which is like the RNN to turing thing, but for transformers,
+            Looked into it, but not really familiar with how all the underlying
+            parts work, but it looks like you make lists of the tokens and
+            performs ops into a matrix, and like a layer in a model does like
+            1-2 ops?
+        </p>
+        <p>made some pseudocode examples of how these math operations look:</p>
+        <p>addition:</p>
+        <pre><code><span class="hljs-attr">num1</span> = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]  <span class="hljs-comment"># 123</span>
+<span class="hljs-attr">num2</span> = [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>]  <span class="hljs-comment"># 456</span>
+
+<span class="hljs-comment"># Reverse the sequences (RASP operates from right to left)</span>
+<span class="hljs-attr">rev1</span> = reverse(num1)  <span class="hljs-comment"># [3, 2, 1]</span>
+<span class="hljs-attr">rev2</span> = reverse(num2)  <span class="hljs-comment"># [6, 5, 4]</span>
+
+<span class="hljs-attr">pairs</span> = zip(rev1, rev2)  <span class="hljs-comment"># [(3, 6), (2, 5), (1, 4)]</span>
+<span class="hljs-attr">sum_digits</span> = <span class="hljs-built_in">map</span>(add, pairs)  <span class="hljs-comment"># [9, 7, 5]</span>
+
+<span class="hljs-comment"># carry-overs</span>
+<span class="hljs-attr">carry</span> = <span class="hljs-number">0</span>
+<span class="hljs-attr">final_sum</span> = []
+for digit <span class="hljs-keyword">in</span> sum_digits:
+    digit += carry
+    <span class="hljs-attr">final_digit</span> = digit % <span class="hljs-number">10</span>  <span class="hljs-comment"># Get the ones digit</span>
+    <span class="hljs-attr">carry</span> = digit // <span class="hljs-number">10</span>  <span class="hljs-comment"># Get the tens digit</span>
+    final_sum.append(final_digit)
+
+<span class="hljs-comment"># Reverse the final sum and return</span>
+<span class="hljs-attr">result</span> = reverse(final_sum)  <span class="hljs-comment"># [5, 7, 9]</span>
+</code></pre>
+        <p>Subtraction:</p>
+        <pre><code><span class="hljs-attr">num1</span> = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+<span class="hljs-attr">num2</span> = [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>]
+
+<span class="hljs-comment"># Determine the sign of the result</span>
+<span class="hljs-keyword">if</span> selector_width(select(indices, indices, num1 &gt;= num2)) &gt; <span class="hljs-number">0</span>:
+    <span class="hljs-comment"># num1 &gt;= num2, result is positive</span>
+    <span class="hljs-attr">sign</span> = <span class="hljs-number">1</span>
+    <span class="hljs-attr">larger</span> = num1
+    <span class="hljs-attr">smaller</span> = num2
+<span class="hljs-keyword">else</span>:
+    <span class="hljs-comment"># num1 &lt; num2, result is negative</span>
+    <span class="hljs-attr">sign</span> = -<span class="hljs-number">1</span>
+    <span class="hljs-attr">larger</span> = num2
+    <span class="hljs-attr">smaller</span> = num1
+
+<span class="hljs-attr">rev_larger</span> = reverse(larger)
+<span class="hljs-attr">rev_smaller</span> = reverse(smaller)
+
+<span class="hljs-comment"># Subtract the pairs element-wise</span>
+<span class="hljs-attr">diffs</span> = <span class="hljs-built_in">map</span>(sub, rev_larger, rev_smaller)  <span class="hljs-comment"># [7, 7, 3]</span>
+
+<span class="hljs-comment"># Borrow</span>
+<span class="hljs-attr">borrowed</span> = <span class="hljs-number">0</span>
+<span class="hljs-attr">final_diff</span> = []
+for digit <span class="hljs-keyword">in</span> diffs:
+    digit <span class="hljs-attr">-=</span> borrowed
+    <span class="hljs-keyword">if</span> digit &lt; <span class="hljs-number">0</span>:
+        digit += <span class="hljs-number">10</span>
+        <span class="hljs-attr">borrowed</span> = <span class="hljs-number">1</span>
+    <span class="hljs-keyword">else</span>:
+        <span class="hljs-attr">borrowed</span> = <span class="hljs-number">0</span>
+    final_diff.append(digit)
+
+<span class="hljs-comment"># add neg token for negatives</span>
+<span class="hljs-keyword">if</span> <span class="hljs-attr">sign==-1:</span>
+  final_diff.append(-)
+
+<span class="hljs-comment"># Reverse the final difference and return with the sign</span>
+<span class="hljs-attr">result</span> = reverse(final_diff)  <span class="hljs-comment"># [-,3, 7, 7]</span>
+</code></pre>
+        <p>Multiplication:</p>
+        <pre><code>num1 = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+num2 = [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>]
+
+rev1 = reverse(num1)
+rev2 = reverse(num2)
+
+<span class="hljs-comment"># Initialize</span>
+<span class="hljs-built_in">result</span> = [<span class="hljs-number">0</span>] * (<span class="hljs-built_in">len</span>(rev1) + <span class="hljs-built_in">len</span>(rev2))
+
+<span class="hljs-comment"># Multiply digits</span>
+<span class="hljs-keyword">for</span> i, digit1 <span class="hljs-keyword">in</span> enumerate(rev1):
+    carry = <span class="hljs-number">0</span>
+    <span class="hljs-keyword">for</span> j, digit2 <span class="hljs-keyword">in</span> enumerate(rev2):
+        product = digit1 * digit2 + <span class="hljs-built_in">result</span>[i + j] + carry
+        <span class="hljs-built_in">result</span>[i + j] = product % <span class="hljs-number">10</span>
+        carry = product<span class="hljs-comment"> // 10</span>
+    <span class="hljs-built_in">result</span>[i + <span class="hljs-built_in">len</span>(rev2)] += carry
+
+<span class="hljs-comment"># Remove leading zeros</span>
+<span class="hljs-keyword">while</span> <span class="hljs-built_in">len</span>(<span class="hljs-built_in">result</span>) &gt; <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> <span class="hljs-built_in">result</span>[<span class="hljs-number">-1</span>] == <span class="hljs-number">0</span>:
+    <span class="hljs-built_in">result</span>.pop()
+
+<span class="hljs-comment"># Reverse the result and return</span>
+final_result = reverse(<span class="hljs-built_in">result</span>)
+</code></pre>
+        <p>Division:</p>
+        <pre><code>num1 = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>]
+num2 = [<span class="hljs-number">6</span>, <span class="hljs-number">7</span>]
+
+rev1 = <span class="hljs-built_in">reverse</span>(num1)
+rev2 = <span class="hljs-built_in">reverse</span>(num2)
+
+# Initialize
+result = []
+<span class="hljs-built_in">remainder</span> = rev1
+
+# Perform long division
+<span class="hljs-keyword">while</span> selector_width(select(<span class="hljs-built_in">indices</span>, <span class="hljs-built_in">indices</span>, <span class="hljs-built_in">remainder</span> &gt;= rev2)) &gt; <span class="hljs-number">0</span>:
+    shift = selector_width(select(<span class="hljs-built_in">indices</span>, <span class="hljs-built_in">indices</span>, <span class="hljs-built_in">remainder</span> &gt;= rev2))
+    multiple = rev2 + [<span class="hljs-number">0</span>] * shift
+    <span class="hljs-built_in">remainder</span> = <span class="hljs-built_in">map</span>(sub, <span class="hljs-built_in">remainder</span>, multiple)
+    result.<span class="hljs-built_in">append</span>(shift)
+
+# Handle the remaining digits <span class="hljs-keyword">in</span> the <span class="hljs-built_in">remainder</span>
+<span class="hljs-built_in">remainder</span> = <span class="hljs-built_in">reverse</span>(<span class="hljs-built_in">remainder</span>)
+<span class="hljs-keyword">while</span> <span class="hljs-built_in">remainder</span> <span class="hljs-keyword">and</span> <span class="hljs-built_in">remainder</span>[<span class="hljs-number">0</span>] == <span class="hljs-number">0</span>:
+    <span class="hljs-built_in">remainder</span>.<span class="hljs-built_in">pop</span>(<span class="hljs-number">0</span>)  # Remove leading zeros
+
+# Convert the result to floating-point <span class="hljs-keyword">if</span> needed
+<span class="hljs-keyword">if</span> <span class="hljs-built_in">remainder</span>:
+    result_float = <span class="hljs-built_in">reverse</span>(result) + ['.'] + <span class="hljs-built_in">remainder</span>
+<span class="hljs-keyword">else</span>:
+    result_float = <span class="hljs-built_in">reverse</span>(result)
+
+# Output: [<span class="hljs-number">1</span>, <span class="hljs-number">8</span>, <span class="hljs-number">4</span>, '.', <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">5</span>, <span class="hljs-number">7</span>]
+</code></pre>
+        <p>
+            Some observations here. Multiplication was addition with extra
+            steps, a model with extra layers could probably reach addition
+            accuracy with multiplication
+        </p>
+        <p>
+            Overall, there&#39;s a similarity between the rasp implementation
+            difficulty and transformer learning difficulty, though the
+            transformer absolutly failed to learn division, compared to its RASP
+            v. layer count was intresting, perhaps long division/remainders
+            wasnt explained well enough in the data, partially accounting for
+            the difficulty.
+        </p>
+        <p>
+            the code diffculty was like add &gt; sub &gt; mul &gt; div, while
+            the transformer learning was like add &gt; mul &gt; sub &gt; div, it
+            looks like the IRL transformer has issues with reversed operations,
+            like the borrower being a reverse carry, and the many if/else and
+            ops in the division made it more difficult for a low layer
+            transformer to figure it out
+        </p>
+        <h2 id="conclusion-and-further-steps">Conclusion and further steps</h2>
+        <p>
+            While real LLMs could probably easily learn/generalize complex math
+            (if 20m gets this close, 120m will probably suceed, and 7b will see
+            this as one little task), future things should try more complex
+            algebra and calculus, which I believe will need more of this, with
+            reasoning, COT, and an ability to understand a theorem and act upon
+            it, so also more logical symbol usage.
+        </p>
+        <p>If I do expand farther on this, its probably along:</p>
+        <ul>
+            <li>scale (needs compute though)</li>
+            <li>logical symbols (¬,∧,∨,↔,etc)</li>
+            <li>
+                xVal for numeric work (<a
+                    href="https://arxiv.org/pdf/2310.02989.pdf"
+                    >https://arxiv.org/pdf/2310.02989.pdf</a
+                >)
+            </li>
+        </ul>
+        <p>CITATIONS:</p>
+        <pre><code> @InProceedings{pmlr-v139-weiss21a,
+   <span class="hljs-attr">title</span> =      {Thinking Like Transformers},
+   <span class="hljs-attr">author</span> =       {Weiss, Gail <span class="hljs-literal">and</span> Goldberg, Yoav <span class="hljs-literal">and</span> Yahav, Eran},
+   <span class="hljs-attr">booktitle</span> =      {Proceedings of the <span class="hljs-number">38</span>th International Conference on Machine Learning},
+   <span class="hljs-attr">pages</span> =      {<span class="hljs-number">11080</span>--<span class="hljs-number">11090</span>},
+   <span class="hljs-attr">year</span> =      {<span class="hljs-number">2021</span>},
+   <span class="hljs-attr">editor</span> =      {Meila, Marina <span class="hljs-literal">and</span> Zhang, Tong},
+   <span class="hljs-attr">volume</span> =      {<span class="hljs-number">139</span>},
+   <span class="hljs-attr">series</span> =      {Proceedings of Machine Learning Research},
+   <span class="hljs-attr">month</span> =      {<span class="hljs-number">18</span>--<span class="hljs-number">24</span> Jul},
+   <span class="hljs-attr">publisher</span> =    {PMLR},
+   <span class="hljs-attr">pdf</span> =      {http://proceedings.mlr.press/v139/weiss21a/weiss21a.pdf},
+   <span class="hljs-attr">url</span> =      {http://proceedings.mlr.press/v139/weiss21a.html}
+   }
+</code></pre>
+    </body>
+</html>
