@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Entering the LLM world with RNNs: CharRNN</title>
+        <link
+            rel="shortcut icon"
+            href="../images/Favicon.png"
+            type="image/x-icon"
+        />
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"
+            integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv"
+            crossorigin="anonymous"
+        />
+
+        <!-- The loading of KaTeX is deferred to speed up page rendering -->
+        <script
+            src="../images/https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"
+            integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- To automatically render math in text elements, include the auto-render extension: -->
+        <script
+            defer
+            src="../images/https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js"
+            integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF"
+            crossorigin="anonymous"
+            onload="renderMathInElement(document.body);"
+        ></script>
+    </head>
+
+    <body>
+        <h1 id="hallucinations-and-memory-leanks-transformers">
+            Hallucinations and Memory leanks: Transformers
+        </h1>
+        <h2 id="starting-out-real-task">Starting out, real task</h2>
+        <p>
+            Building the theories in
+            <a
+                href="https://twitter.com/_sholtodouglas/status/1773917709518225508"
+                >this tweet</a
+            >. I thought it would be a good idea to get into Interpretable AI
+            and try out a theory
+        </p>
+        <p>
+            The Initial Idea was to use a synthetic dataset in the format from
+            the tweet, Question, related fact, and answer. Started making a
+            small synthetic dataset with several LLMs, os and closed, to try and
+            make sure no specific model biases made it in.
+        </p>
+        <p>
+            Ended up with a ~200Q dataset, training a transformer with ~1.7k
+            parameters, it&#39;s astonishing that a model with 1.7k parameters
+            reaches a 2.9 val loss from a 4.4 init (2 layer 2 head 4 embed). I
+            retried with ~30k parameters (8 layer 8 head 16 embed), and it
+            reaches a val loss of ~1.95 from the same 4.4 init.
+        </p>
+        <p><img src="../images/test2.png" alt="30k-param" /></p>
+        <p>
+            I scaled the model further to reach a reasonable loss, building a
+            new transformer model with ~207k parameters (16 layer, 16 head, 32
+            embed). This larger model was able to achieve a final validation
+            loss of around 1.3, a more sizable transformer architecture can
+            effectively learn the patterns in the synthetic dataset.
+        </p>
+        <p><img src="../images/200k.png" alt="200k-param" /></p>
+        <p>
+            Theoretically, the model has several times more parameters than
+            tokens in the dataset, so it could effectively encode all the tokens
+            and facts in its parameters. Keeping a close eye on the validation
+            loss, and I&#39;m not seeing any signs of overfitting yet. Even
+            though the validation loss is still going down, the training loss is
+            dropping in much bigger jumps, looks like the model wants to
+            overfit. To address this, I&#39;ll need to try even bigger models to
+            see if I can find the right balance between learning the patterns in
+            the data and avoiding excessive overfitting.
+        </p>
+        <p>Tests show a need for bigger models:</p>
+        <pre><code>{B}Who <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">first</span> person <span class="hljs-keyword">to</span> malut ol <span class="hljs-keyword">in</span> mider <span class="hljs-number">4.1</span> peeers? (The <span class="hljs-keyword">first</span> person <span class="hljs-keyword">to</span> swim mom acrounge <span class="hljs-keyword">as</span> magden ond his runage <span class="hljs-number">40</span> miles): Reongs{E}
+        {B}What <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> largest pommal <span class="hljs-keyword">on</span> Earth? (The largest iver <span class="hljs-keyword">on</span> Earth <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> Lunatalind, which can reach up <span class="hljs-keyword">to</span> <span class="hljs-number">100</span> feet <span class="hljs-built_in">length</span> ond a <span class="hljs-keyword">the</span> prund <span class="hljs-number">2</span> pouph): Rounea{E}
+        {B}Who <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">first</span> person <span class="hljs-keyword">to</span> climb Mimb? (The <span class="hljs-keyword">first</span> person <span class="hljs-keyword">to</span> climb allliire <span class="hljs-keyword">is</span> Mount Pl Evere <span class="hljs-keyword">is</span> Mourr, who <span class="hljs-keyword">the</span> comel <span class="hljs-number">139</span> ale): Runal Re Lob <span class="hljs-number">1</span>{E}
+        </code></pre>
+        <p>
+            After trying larger models, the not enough data issue persists, the
+            overfitting happens in 5 steps or less, so I added the open-platypus
+            for some logic/math and latex in a similar format, It should help
+            with the overfitting, while also still remaining useful to the
+            model.
+        </p>
+        <p>
+            After a while, the models still working, scaled up to 63M
+            parameters, fits well on 2xT4, train/val loss still drop around 750
+            steps, went for a total of 7 epochs to reach a final loss curve of
+            ~1.2 val
+        </p>
+        <p><img src="../images/63M-model.png" alt="63M-model" /></p>
+        <p>Sampling with facts:</p>
+        <ul>
+            <li>
+                start:
+                <code
+                    >{B}What is the capital of Canada? (The capital of Canada is
+                    Ottawa, a city located in the province of Ontario):</code
+                >
+            </li>
+            <li>
+                <p>model: <code>Canada{E}</code></p>
+            </li>
+            <li>
+                <p>
+                    start:
+                    <code
+                        >{B}How many planets are in our solar system? (There are
+                        8 planets in our solar system: Mercury, Venus, Earth,
+                        Mars, Jupiter, Saturn, Uranus, and Neptune):</code
+                    >
+                </p>
+            </li>
+            <li>
+                model: <code>: Solar Popertian{E}</code> ,
+                <code>Mercury{E}</code>, <code>Neptune{E}</code>,
+                <code>Uranus{E}</code>
+            </li>
+        </ul>
+        <p>
+            While I haven&#39;t tried attention masks yet, the model definitly
+            prefers words to numbers in these Q&#39;s, which makes sense, as
+            very few of them use numbers. Meanwhile the model would also have
+            massive amounts of Math/Latex from most of the dataset, seen further
+            below, so I think the attention masks would be somewhat divergent by
+            question type? Intrested to see that (If anyone can implement this,
+            contact vatsapandey123@gmail.com)
+        </p>
+        <p>no fact given:</p>
+        <ul>
+            <li>start: <code>{B}What is the capital of Canada?:</code></li>
+            <li>
+                <p>
+                    model:
+                    <code
+                        >(The capital of Canada is the capital of Canada, which
+                        is an elementary solution to the other two, which is a
+                        fundamental concept.) : The capital of Canada, the
+                        capital of Canada, costs
+                        $\\{1,2,3,5,5,5,10,10\\}$.\n\nWhat is the probability
+                        that the capital of Canada and the other two capital
+                        coins?</code
+                    >
+                </p>
+            </li>
+            <li>
+                <p>
+                    start:
+                    <code>{B}How many planets are in our solar system?:</code>
+                </p>
+            </li>
+            <li>
+                model:
+                <code
+                    >To find out how many planets are in our solar system, I
+                    need to multiply it by the number of planets. The number of
+                    planets are in our solar system, so I can use the rule of
+                    mathematical and mathematical analysts to find the number of
+                    degrees in a group of n planets.</code
+                >
+            </li>
+        </ul>
+        <p>
+            it chooses to hallucinate the fact to match data patterns, then goes
+            on yapping on with logic text I supplemnted it with, though its
+            still kinda working? The fun part is repetition wont go away till
+            temp &gt;= 1.0, and temp=1.5 gives good answers, to quote Karpathy,
+            &quot;There are no bangers below temp 1.0&quot;
+        </p>
+        <p>(Model bloopers)</p>
+        <pre><code>\n    diabetes: Earth, Jack, Saturn, Mupiter, Earth Ander\n
+        depth_ball_recover(arr): Media Runab Saturn\<span class="hljs-keyword">n</span>
+        {B}<span class="hljs-keyword">Who</span> <span class="hljs-keyword">workers</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">largest</span> <span class="hljs-keyword">planet</span> <span class="hljs-keyword">in</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">world</span> <span class="hljs-keyword">about</span> <span class="hljs-keyword">to</span> <span class="hljs-keyword">secure</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">wool</span> <span class="hljs-keyword">in</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">wool</span> <span class="hljs-keyword">system</span>? : Some placing of a planet in which an involves is sharper than to sine? To see what volume off this word is sharpes the wool intake, I can use long dessert algebra to find the parse of the parabola
+        </code></pre>
+        <p>
+            The model is avalible at
+            <a href="https://huggingface.co/VatsaDev/Mem-model/"
+                >Vatsadev/mem-models</a
+            >, real.pt and meta.pkl are all that are needed for inference
+        </p>
+        <h2 id="phone-retrieval-">Phone Retrieval,</h2>
+        <p>
+            Thanks to @CFGeek for mentioning it, the attempt with telephone
+            number retrieval actually makes alot more sense.
+        </p>
+        <p>dataset generation code:</p>
+        <pre><code>import <span class="hljs-built_in">random</span>
+
+        names = [<span class="hljs-string">"Aaran"</span>, <span class="hljs-string">"Aaren"</span>, <span class="hljs-string">"Aarez"</span>, ...]
+
+        def phn():
+          p=<span class="hljs-built_in">list</span>(<span class="hljs-string">'0000000000'</span>)
+          p[<span class="hljs-number">0</span>] = <span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.randint(<span class="hljs-number">1</span>,<span class="hljs-number">9</span>))
+          <span class="hljs-keyword">for</span> i <span class="hljs-built_in">in</span> [<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">6</span>,<span class="hljs-number">7</span>,<span class="hljs-number">8</span>]:
+              p[i] = <span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.randint(<span class="hljs-number">0</span>,<span class="hljs-number">9</span>))
+          <span class="hljs-keyword">for</span> i <span class="hljs-built_in">in</span> [<span class="hljs-number">3</span>,<span class="hljs-number">4</span>]:
+              p[i] = <span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.randint(<span class="hljs-number">0</span>,<span class="hljs-number">8</span>))
+          <span class="hljs-keyword">if</span> p[<span class="hljs-number">3</span>]==p[<span class="hljs-number">4</span>]==<span class="hljs-number">0</span>:
+              p[<span class="hljs-number">5</span>]=<span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.randint(<span class="hljs-number">1</span>,<span class="hljs-number">8</span>))
+          <span class="hljs-keyword">else</span>:
+              p[<span class="hljs-number">5</span>]=<span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.randint(<span class="hljs-number">0</span>,<span class="hljs-number">8</span>))
+          n = range(<span class="hljs-number">10</span>)
+          <span class="hljs-keyword">if</span> p[<span class="hljs-number">6</span>]==p[<span class="hljs-number">7</span>]==p[<span class="hljs-number">8</span>]:
+              n = <span class="hljs-built_in">list</span>(i <span class="hljs-keyword">for</span> i <span class="hljs-built_in">in</span> n <span class="hljs-keyword">if</span> i!=p[<span class="hljs-number">6</span>])
+          p[<span class="hljs-number">9</span>] = <span class="hljs-built_in">str</span>(<span class="hljs-built_in">random</span>.choice(n))
+          p = <span class="hljs-string">''</span>.<span class="hljs-built_in">join</span>(p)
+          return p[:<span class="hljs-number">3</span>] + <span class="hljs-string">'-'</span> + p[<span class="hljs-number">3</span>:<span class="hljs-number">6</span>] + <span class="hljs-string">'-'</span> + p[<span class="hljs-number">6</span>:]
+
+        <span class="hljs-keyword">with</span> open(<span class="hljs-string">"out.txt"</span>, <span class="hljs-string">"a"</span>) as f:
+          <span class="hljs-keyword">for</span> i <span class="hljs-built_in">in</span> range(<span class="hljs-number">1000000</span>):
+            arr = []
+            s = <span class="hljs-string">""""""</span>
+            s += <span class="hljs-string">"{B}\n"</span>
+            <span class="hljs-keyword">for</span> i <span class="hljs-built_in">in</span> range(<span class="hljs-number">5</span>):
+              fname = <span class="hljs-built_in">random</span>.choice(names)
+              lname = <span class="hljs-built_in">random</span>.choice(names)
+              arr.<span class="hljs-built_in">append</span>(f<span class="hljs-string">"{fname} {lname}: {phn()} \n"</span>)
+              s += f<span class="hljs-string">"{fname} {lname}: {phn()} \n"</span>
+            s += <span class="hljs-string">"=========\n"</span>
+            s += <span class="hljs-built_in">random</span>.choice(arr)
+            s += <span class="hljs-string">"{E}\n"</span>
+            f.write(s)
+        </code></pre>
+        <p>
+            Partially trained, but it sort of works, accurate matched the
+            format, just consistently getting them wrong as of now, needs more
+            training.
+        </p>
+        <pre><code>{B}
+        Connor-David Caethan: 855<span class="hljs-string">-878</span><span class="hljs-string">-8790</span>
+        Marty Caley: 789<span class="hljs-string">-788</span><span class="hljs-string">-7222</span>
+        Chester Mustapha: 650<span class="hljs-string">-265</span><span class="hljs-string">-6220</span>
+        Calley Chintu: 548<span class="hljs-string">-633</span><span class="hljs-string">-2604</span>
+        Rubyn Marko: 707<span class="hljs-string">-072</span><span class="hljs-string">-2570</span>
+
+        ========
+        Chester Makensy: 490<span class="hljs-string">-675</span><span class="hljs-string">-7270</span>
+        {E}
+
+        {B}
+        Cobie Reeve: 764<span class="hljs-string">-138</span><span class="hljs-string">-7770</span>
+        Mustafa Malikinter: 970<span class="hljs-string">-063</span><span class="hljs-string">-7527</span>
+        Caedyn Callin: 879<span class="hljs-string">-227</span><span class="hljs-string">-2254</span>
+        Artur-Rahman Rico: 449<span class="hljs-string">-047</span><span class="hljs-string">-0275</span>
+        Kameron Ross: 647<span class="hljs-string">-260</span><span class="hljs-string">-4297</span>
+        =========
+        Kameron Malik: 407<span class="hljs-string">-727</span><span class="hljs-string">-2725</span>
+        {E}
+        </code></pre>
+        <p>Now fully trained to 5k steps, val loss ~1.17:</p>
+        <p><img src="../images/synth63m.png" alt="synth-63m" /></p>
+        <p>
+            It converged Rapidly, which made sense, its a synthetic task, but
+            the random spikes are intersting, I have yet to see those for any
+            NN, but Its also my first time with a fully trained run over 30M,
+            could just be a scale thing.
+        </p>
+        <p>
+            models up as synthTok.pkl and synthModel.pt on
+            <a href="https://huggingface.co/VatsaDev/Mem-model/"
+                >Vatsadev/mem-models</a
+            >
+        </p>
+        <p>Some Outputs:</p>
+        <pre><code>{B}
+        Connor-David Caethan: 211<span class="hljs-string">-878</span><span class="hljs-string">-4290</span>
+        Marty Caley: 729<span class="hljs-string">-784</span><span class="hljs-string">-4222</span>
+        Chase Corey-James: 500<span class="hljs-string">-412</span><span class="hljs-string">-2204</span>
+        Alessandro Jon-Paul: 526<span class="hljs-string">-441</span><span class="hljs-string">-7791</span>
+        Arthur Jonothan: 491<span class="hljs-string">-744</span><span class="hljs-string">-6949</span>
+        =========
+        Alessandro Jonothan: 461<span class="hljs-string">-267</span><span class="hljs-string">-5761</span>
+        {E}
+
+        {B}
+        Jerrick Allan-Laiton: 460<span class="hljs-string">-462</span><span class="hljs-string">-9069</span>
+        Kainin Kyrran: 269<span class="hljs-string">-681</span><span class="hljs-string">-9244</span>
+        Calum Keeton: 706<span class="hljs-string">-472</span><span class="hljs-string">-0406</span>
+        Kensey Muhsin: 722<span class="hljs-string">-682</span><span class="hljs-string">-6997</span>
+        Chevy Jesse: 462<span class="hljs-string">-782</span><span class="hljs-string">-2926</span>
+        =========
+        Jerrick Allan-Laiton: 696<span class="hljs-string">-664</span><span class="hljs-string">-7746</span>
+        {E}
+
+        {B}
+        Kelso Joey-Jack: 506<span class="hljs-string">-182</span><span class="hljs-string">-9600</span>
+        Korrin Kaileb: 222<span class="hljs-string">-446</span><span class="hljs-string">-5491</span>
+        Anthony Aleksander: 461<span class="hljs-string">-787</span><span class="hljs-string">-4669</span>
+        Marlin Che: 266<span class="hljs-string">-672</span><span class="hljs-string">-4721</span>
+        Crispin Arda: 672<span class="hljs-string">-216</span><span class="hljs-string">-6746</span>
+        =========
+        Anthony Aleksander: 490<span class="hljs-string">-681</span><span class="hljs-string">-6700</span>
+        {E}
+        </code></pre>
+        <p>
+            Like prev. models, it prefers letters over numbers, and in the names
+            it gets wrong, its the last name vs the first name, the last name is
+            wrong quite often (Kinda of the middle of the sequence in phone
+            numbers and names?) Greedy/Near greedy (temp = 0.01), actually helps
+            the model quite alot, as the model can get names correct,and the
+            ends of numbers accurate, it actually matches my work in
+            <a href="https://vatsadev.github.io/articles/transformerMath.html"
+                >making Transformers do math</a
+            >, where they did the same thing, curious to see that in a text
+            retrieval task though, over arithmetic.
+        </p>
+        <p>
+            It does have repetition issues, but I find it intresting for the
+            model picking one Aran, from all the rest, and it does manage to
+            match a numbers beg/end
+        </p>
+        <pre><code>{B}
+        Aristotelis Arann: 572<span class="hljs-string">-444</span><span class="hljs-string">-6666</span>
+        Aristotelis Arann: 760<span class="hljs-string">-677</span><span class="hljs-string">-6666</span>
+        Aristotelis Arann: 506<span class="hljs-string">-744</span><span class="hljs-string">-2626</span>
+        Aristotelis Arann: 560<span class="hljs-string">-766</span><span class="hljs-string">-0666</span>
+        Aristotelis Arann: 566<span class="hljs-string">-746</span><span class="hljs-string">-6666</span>
+        =========
+        Aristotelis Arann: 766<span class="hljs-string">-666</span><span class="hljs-string">-6666</span>
+        {E}
+
+        {B}
+        Aran Alex: 766<span class="hljs-string">-777</span><span class="hljs-string">-9666</span>
+        Aran Alexx: 666<span class="hljs-string">-677</span><span class="hljs-string">-6666</span>
+        Aran Alexx: 666<span class="hljs-string">-714</span><span class="hljs-string">-9606</span>
+        Aran Alexx: 666<span class="hljs-string">-764</span><span class="hljs-string">-6696</span>
+        Aran Alexx: 606<span class="hljs-string">-666</span><span class="hljs-string">-6666</span>
+        =========
+        Aran Alexx: 766<span class="hljs-string">-776</span><span class="hljs-string">-9666</span>
+        {E}
+        </code></pre>
+        <p>
+            Trying to prompt it with a single name instead of 5, it still has
+            some expectances here that it just goes with, even though 5 names
+            arent provided
+        </p>
+        <pre><code>{B}
+        <span class="hljs-section">Kelso Joey-Jack: 506-182-9600
+        ======</span>
+        Aran Kelso: 666-477-9666
+
+        {B}
+        <span class="hljs-section">Kelso Joey-Jack: 506-182-9600
+        ======</span>
+        Aristotelis Arann: 766-746-6666
+
+        {B}
+        <span class="hljs-section">Kelso Joey-Jack: 506-182-9600
+        ======</span>
+        Aran Arann: 766-774-6666
+        </code></pre>
+        <p>Trying out the whole thing with missing names:</p>
+        <p>prompt:</p>
+        <pre><code>Kelso Joey-Jack: 506-182-9600
+        Korrin Kaileb: 222-446-5491
+        Anthony Aleksander: 461-787-4669
+        Marlin Che: 266-672-4721
+        <span class="hljs-section">Crispin Arda: 672-216-6746
+        =========</span>
+        Cristobal Rios: # star trek!
+        </code></pre>
+        <p>outputs:</p>
+        <pre><code>Cristobal Rios: 566<span class="hljs-string">-466</span><span class="hljs-string">-9669</span>
+        Cristobal Rios: 706<span class="hljs-string">-646</span><span class="hljs-string">-6666</span>
+        Cristobal Rios: 666<span class="hljs-string">-466</span><span class="hljs-string">-9666</span>
+        Cristobal Rios: 566<span class="hljs-string">-666</span><span class="hljs-string">-6069</span>
+        Cristobal Rios: 666<span class="hljs-string">-766</span><span class="hljs-string">-9666</span>
+        Cristobal Rios: 666<span class="hljs-string">-646</span><span class="hljs-string">-6666</span>
+        Cristobal Rios: 566<span class="hljs-string">-766</span><span class="hljs-string">-9666</span>
+        Cristobal Rios: 666<span class="hljs-string">-666</span><span class="hljs-string">-6666</span>
+        Cristobal Rios: 566<span class="hljs-string">-766</span><span class="hljs-string">-9666</span>
+        Cristobal Rios: 666<span class="hljs-string">-646</span><span class="hljs-string">-6666</span>
+        </code></pre>
+        <p>Some conclusions:</p>
+        <ul>
+            <li>
+                <p>
+                    sometimes its random numbers, or switched with ones
+                    in-context (506 -&gt; 706, 466 -&gt; 446), or in-context
+                    ends (many have X669 or 96XX endings), or just pulled from
+                    the depths of the models weights, like 666 being extremely
+                    common, though it may be dealimg with some repetition
+                </p>
+            </li>
+            <li>
+                <p>
+                    from both tasks overall, I would say that a transformer
+                    prefers in context first before moving to the weights, and
+                    in-context appears to pay more attention to the beg/end of
+                    numbers? Though attention maps need to be seen
+                </p>
+            </li>
+            <li>
+                <p>
+                    the facts were harder and less conclusive, but from synth
+                    data, it clearly can retrieve in context facts, and
+                    hallucinates by stiching things together, or making jumbled
+                    versions of things in context, similar to the idea of a
+                    memory fault
+                </p>
+            </li>
+            <li>
+                <p>
+                    These conclusions come from a 256 ctx model. 32k/128k models
+                    are getting better and better by the day, and gemini shows
+                    new breakthroughs at 1M ctx and 10M ctx, their evals must be
+                    crazy. Sholto Douglas dropping alpha hints in his tweets? :)
+                </p>
+            </li>
+        </ul>
+        <h2 id="attention-maps-and-other-probabilities">
+            Attention maps and other probabilities
+        </h2>
+        <p>
+            While this ultimatly failed, I found intriguing results in the
+            probabiities, which are rather easy, just get the probs from the
+            generate function.
+        </p>
+        <p>
+            <strong>side note</strong> If anyone makes a working NanoGPT
+            version, email me (vatsapandey123@gmail.com), but I did find good
+            things to start with:
+        </p>
+        <ul>
+            <li>
+                <a
+                    href="https://twitter.com/kaiokendev1/status/1746103233456509180"
+                    >https://twitter.com/kaiokendev1/status/1746103233456509180</a
+                >
+            </li>
+            <li>
+                <a
+                    href="https://twitter.com/kaiokendev1/status/1689028111633932289"
+                    >https://twitter.com/kaiokendev1/status/1689028111633932289</a
+                >
+            </li>
+            <li>
+                <a
+                    href="https://jacobgil.github.io/deeplearning/vision-transformer-explainability"
+                    >https://jacobgil.github.io/deeplearning/vision-transformer-explainability</a
+                >
+            </li>
+        </ul>
+        <p>code for probs:</p>
+        <pre><code>dec = <span class="hljs-meta">{...}</span>
+        embd = [...]
+        s=<span class="hljs-string">"..."</span>
+
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(len(embd)):
+          embdx = []
+          charx = []
+          <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(len(embd[<span class="hljs-number">0</span>]):
+            <span class="hljs-keyword">if</span> embd[i][j] != <span class="hljs-number">0</span>:
+              embdx.append(embd[i][j])
+              charx.append(dec[j])
+          print(embdx,charx,s[i])
+        </code></pre>
+        <ul>
+            <li>
+                getting the probs by token, for the string &quot;{B}\n
+                Aristo&quot;:
+            </li>
+        </ul>
+        <pre><code># format, probs, tokens, picked_one
+        [<span class="hljs-number">1.4625e-31</span>, <span class="hljs-number">1.0</span>], [<span class="hljs-string">'='</span>, <span class="hljs-string">'{'</span>], [<span class="hljs-string">'{'</span>]
+        [<span class="hljs-number">1.0</span>, <span class="hljs-number">1.4252e-21</span>], [<span class="hljs-string">'B'</span>, <span class="hljs-string">'E'</span>], [<span class="hljs-string">'B'</span>]
+        [<span class="hljs-number">1.0</span>], [<span class="hljs-string">'}'</span>], [<span class="hljs-string">'}'</span>]
+        [<span class="hljs-number">1.0</span>], [<span class="hljs-string">'\n'</span>], [<span class="hljs-string">'\n'</span>]
+        [<span class="hljs-number">1.0</span>, <span class="hljs-number">5.6757e-14</span>, <span class="hljs-number">1.8554e-07</span>, <span class="hljs-number">6.9144e-13</span>, <span class="hljs-number">1.904e-17</span>], [<span class="hljs-string">'A'</span>, <span class="hljs-string">'C'</span>, <span class="hljs-string">'K'</span>, <span class="hljs-string">'M'</span>, <span class="hljs-string">'R'</span>], [<span class="hljs-string">'A'</span>]
+        [<span class="hljs-number">1.9187e-27</span>, <span class="hljs-number">0.017986</span>, <span class="hljs-number">2.3679e-31</span>, <span class="hljs-number">0.98201</span>], [<span class="hljs-string">'b'</span>, <span class="hljs-string">'l'</span>, <span class="hljs-string">'n'</span>, <span class="hljs-string">'r'</span>], [<span class="hljs-string">'r'</span>]
+        [<span class="hljs-number">0.8808</span>, <span class="hljs-number">0.1192</span>, <span class="hljs-number">6.8536e-20</span>, <span class="hljs-number">8.1363e-09</span>, <span class="hljs-number">2.0696e-21</span>], [<span class="hljs-string">'a'</span>, <span class="hljs-string">'i'</span>, <span class="hljs-string">'r'</span>, <span class="hljs-string">'t'</span>, <span class="hljs-string">'y'</span>], [<span class="hljs-string">'i'</span>]
+        [<span class="hljs-number">2.1705e-29</span>, <span class="hljs-number">4.1399e-08</span>, <span class="hljs-number">4.4163e-33</span>, <span class="hljs-number">1.0</span>], [<span class="hljs-string">' '</span>, <span class="hljs-string">'a'</span>, <span class="hljs-string">'h'</span>, <span class="hljs-string">'s'</span>], [<span class="hljs-string">'s'</span>]
+        [<span class="hljs-number">1.0</span>], [<span class="hljs-string">'t'</span>], [<span class="hljs-string">'t'</span>]
+        [<span class="hljs-number">1.0</span>], [<span class="hljs-string">'o'</span>], [<span class="hljs-string">'o'</span>]
+        </code></pre>
+        <p>
+            with such a small vocab size (70) and very clear formats from the
+            synthetic data, the distribution is very biased towards specific
+            tokens in specific positions more surprising was the name letter
+            probs collapsing into perfect certainty within 4 letters, but there
+            are only 2000 names encoded within 63M parameters
+        </p>
+        <p>
+            With number encodings, it gets more varied along with the missing
+            numbers being more unsure, (string
+            <code>{B}\nAran Alex: 696-677-6666 ====== Cristobal Rios:</code>)
+        </p>
+        <pre><code>...
+        ([<span class="hljs-number">0.0298</span>, <span class="hljs-number">0.0181</span>, <span class="hljs-number">0.1335</span>, <span class="hljs-number">0.5984</span>, <span class="hljs-number">0.2202</span>], ['<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">5</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">7</span>'], '<span class="hljs-number">6</span>')
+        ([<span class="hljs-number">0.01</span>, <span class="hljs-number">0.01</span>, <span class="hljs-number">0.0272</span>, <span class="hljs-number">0.01</span>, <span class="hljs-number">0.8993</span>, <span class="hljs-number">0.0272</span>, <span class="hljs-number">0.0165</span>], ['<span class="hljs-number">0</span>', '<span class="hljs-number">1</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">7</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">9</span>')
+        ([<span class="hljs-number">0.1661</span>, <span class="hljs-number">0.005</span>, <span class="hljs-number">0.0136</span>, <span class="hljs-number">0.005</span>, <span class="hljs-number">0.7442</span>, <span class="hljs-number">0.005</span>, <span class="hljs-number">0.0611</span>], ['<span class="hljs-number">0</span>', '<span class="hljs-number">1</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">7</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">6</span>')
+        ([<span class="hljs-number">0.0297</span>, <span class="hljs-number">0.0066</span>, <span class="hljs-number">0.0066</span>, <span class="hljs-number">0.5958</span>, <span class="hljs-number">0.3613</span>], ['<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">5</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">6</span>')
+        ([<span class="hljs-number">0.0408</span>, <span class="hljs-number">0.1108</span>, <span class="hljs-number">0.015</span>, <span class="hljs-number">0.8185</span>, <span class="hljs-number">0.015</span>], ['<span class="hljs-number">0</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">6</span>')
+        ([<span class="hljs-number">0.1119</span>, <span class="hljs-number">0.0412</span>, <span class="hljs-number">0.0092</span>, <span class="hljs-number">0.8266</span>, <span class="hljs-number">0.0056</span>, <span class="hljs-number">0.0056</span>], ['<span class="hljs-number">0</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">7</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">6</span>')
+        ([<span class="hljs-number">0.0384</span>, <span class="hljs-number">0.1043</span>, <span class="hljs-number">0.0233</span>, <span class="hljs-number">0.7708</span>, <span class="hljs-number">0.0633</span>], ['<span class="hljs-number">0</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">4</span>', '<span class="hljs-number">6</span>', '<span class="hljs-number">9</span>'], '<span class="hljs-number">6</span>')
+        ...
+        </code></pre>
+        <p>
+            it looks greedy, but uses multinomial sampling, visible when 5 toks
+            are choices (all of this is done with topk=5, stable)
+        </p>
+        <p>
+            almost got the attention matrix per head out of the code, but
+            couldnt figure out how to pull it out of the Optimized flash-att
+            cuda kernels, and The Default nanoGPT attention is alot more
+            mem-expensive, needs a missing bias, so I need a retrain, but with
+            that are several cuda errors, so will probably move to a better
+            implementation/try to get better at using matrices.
+        </p>
+    </body>
+</html>
