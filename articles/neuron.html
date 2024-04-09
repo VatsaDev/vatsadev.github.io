@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>How a neuron learns: Linear layers</title>
+        <link
+            rel="shortcut icon"
+            href="../images/Favicon.png"
+            type="image/x-icon"
+        />
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"
+            integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv"
+            crossorigin="anonymous"
+        />
+
+        <!-- The loading of KaTeX is deferred to speed up page rendering -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"
+            integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- To automatically render math in text elements, include the auto-render extension: -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js"
+            integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF"
+            crossorigin="anonymous"
+            onload="renderMathInElement(document.body);"
+        ></script>
+    </head>
+
+    <body>
+        <h1 id="how-a-neuron-learns-linear-layers">
+            How a neuron learns: Linear layers
+        </h1>
+        <h2 id="intro">Intro</h2>
+        <p>
+            In the world of math, most things can be represented as a function,
+            or simply input-&gt;eqn-&gt;output (Ex: y = 2x). Conceptually, many
+            things in real life are also functions. Neural nets are universal
+            approximations, by Universal approx. theorem, they can represent any
+            continuous function, and so neural nets have many real-life
+            approximations. Here&#39;s a NN trying to approximate a curve (Hello
+            world sketch), from Emergent garden:
+        </p>
+        <p><img src="../images/NNapprox.png" alt="approx" width="500px" /></p>
+        <h2 id="neural-net-basics">Neural net basics</h2>
+        <p>This is a neural net:</p>
+        <p><img src="../images/nn.png" alt="nn.png" width="500px" /></p>
+        <p>
+            While that&#39;s oversimplified, a NN can be split into 3 separate
+            parts: Input, Output, and Hidden.
+        </p>
+        <p>
+            The input layer is bascially a way to take in your input in a
+            mathematical way,
+        </p>
+        <ul>
+            <li>
+                In MNIST with CNNs, the input layer takes in 774 pixels (28x28),
+                values
+            </li>
+            <li>for NLP, the input layer is a sequence of values/tokens</li>
+            <li>
+                in audio/video generation, the input is often spectograms, or
+                midi files turned to mathematical values
+            </li>
+        </ul>
+        <p>
+            Hidden layers, built with weights and biases (more on that later),
+            are the main parts of a neural net, the neural net magic, taking the
+            inputs, and transforming them with the values of the weights and
+            biases to eventually reach an output
+        </p>
+        <p>
+            Output is the final layer, its activations and probabilities hold
+            the answers the nn made,
+        </p>
+        <ul>
+            <li>In CNNs, the output layer holds the probabilities per class</li>
+            <li>
+                In nlp tasks, the output layer often holds the probs of each
+                token
+            </li>
+        </ul>
+        <h2 id="linear-layer">Linear Layer</h2>
+        <p>In a linear layer, the NN can be simplified to one function:</p>
+        <p>$$y=mx+b$$, or in the case of Neural nets, $$y=wx+b$$</p>
+        <p>
+            Here, y is the output layer, or output of the function, while x is
+            the input layer, or input to the function. The Hidden layer
+            transformation works through the values of w and b, the weights and
+            biases.
+        </p>
+        <p>Sample python code, with the function $$y=8x+3$$</p>
+        <pre><code><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np
+        <span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt
+
+        <span class="hljs-title">x_v</span> = [<span class="hljs-number">2</span>,<span class="hljs-number">4</span>]
+
+        <span class="hljs-meta"># function vals</span>
+        <span class="hljs-title">y_v</span> = <span class="hljs-number">8</span>*x_v + <span class="hljs-number">3</span>
+        </code></pre>
+        <p>
+            Now we have a simple dataset for the linear layer, [(2,19),(4,35)].
+            The linear layer has to now deal with changing w=8 and b=3 from that
+            data
+        </p>
+        <p>
+            In the neural net, the values are initially random, before slowly
+            getting closer and closer to the perfect
+        </p>
+        <p>Python code for the linear layer:</p>
+        <pre><code><span class="hljs-built_in">np</span>.<span class="hljs-built_in">random</span>.seed(<span class="hljs-number">42</span>)
+        w = <span class="hljs-built_in">np</span>.<span class="hljs-built_in">random</span>.randn()
+        b = <span class="hljs-built_in">np</span>.<span class="hljs-built_in">random</span>.randn()
+
+        def forward():
+          <span class="hljs-built_in">return</span> w * x + b
+
+        y_hat = [forward(x) <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> x_v]
+        </code></pre>
+        <p><code>w: 0.4523 b: 0.6378</code></p>
+        <p>To get to the accurate values, we need two things</p>
+        <ul>
+            <li>
+                a way to get the accuracy, or how close we are to the real
+                values of the outputs (aka Loss)
+            </li>
+            <li>
+                a way to change the values, in a way to get closer to the real
+                value of w and b (aka gradient descent)
+            </li>
+        </ul>
+        <h2 id="loss-and-gradient-descent">Loss and Gradient Descent</h2>
+        <p>
+            For regression, like this situation, we use MSE (Mean Squared Error)
+            loss. MSE loss is defined as:
+        </p>
+        <p>$$\text{MSE} = \frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2$$</p>
+        <p>
+            Using this with a cost function, $$C = \frac{MSE}{2}$$ very useful
+            when comparing parameters to error in MSE
+        </p>
+        <p>
+            A graph from Qtnx: <br />
+            <img
+                src="../images/mse_cost.png"
+                alt="mse_cost to param function"
+                width="500px"
+            />
+        </p>
+        <p>
+            We can find the right way to go by looking at the loss, and what
+            directions its increasing or decreasing in.
+        </p>
+        <p>
+            Calculate the gradients using the chain rule, or the backprop
+            calculus,
+        </p>
+        <p>
+            With Loss L, and activation a, showing the chain rule for weights
+            and biases
+        </p>
+        <p>
+            $$\frac{\partial C}{\partial w} = \frac{\partial C}{\partial
+            a}\frac{\partial a}{\partial w}$$ $$\frac{\partial C}{\partial b} =
+            \frac{\partial C}{\partial a}\frac{\partial a}{\partial b}$$
+        </p>
+        <p>
+            Updates the paramters with the LR(Learning Rate), between 1e-3 and
+            1e-5:
+        </p>
+        <pre><code>w -= grad(<span class="hljs-name">w</span>)*lr
+        b -= grad(<span class="hljs-name">b</span>)*lr
+        </code></pre>
+        <p>LR matters, shown in the qtnx graphs:</p>
+        <p>
+            Low lr, proper drop: <br />
+            <img src="../images/small_lr.png" alt="small" width="500px" />
+        </p>
+        <p>
+            High lr, wild drop: <br />
+            <img src="../images/high_lr.png" alt="high" width="500px" />
+        </p>
+        <p>
+            Overall, the model trains in a couple steps and learns the exact
+            regression.
+        </p>
+    </body>
+</html>
