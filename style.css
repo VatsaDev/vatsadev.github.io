@@ -21,6 +21,11 @@ p {
     width: 80%;
 }
 
+blockquote {
+    font-style: italic;
+    color: #d388e2;
+}
+
 canvas {
     position: absolute;
     top: 0;

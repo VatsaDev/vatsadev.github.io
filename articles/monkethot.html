@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Test</title>
+    <link rel="stylesheet" href="../style.css" type="text/css" media="all" />
+    <link rel="shortcut icon" href="../images/Favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"
+        integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv" crossorigin="anonymous" />
+
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"
+        integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O"
+        crossorigin="anonymous"></script>
+
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js"
+        integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+
+    <script>
+        hljs.highlightAll();
+    </script>
+    <h1 id="monkey-thot-compression-musings-on-the-neuralink-challenge">Monkey thot compression: musings on the
+        neuralink challenge</h1>
+    <h2 id="the-challenge">the challenge</h2>
+    <p>Overall, you have to compress monkey brainwaves 200x losslessly to win, but also under severe minihardware
+        constrictions. I doubt anyone is compressing the heavy amount of noise in that 200x, and to the exact hardware
+        specifications of the neuralink, but people did the boring challenge, and its fun to try compression from
+        scratch, so I&#39;m attepmting to compress it on my laptop, and beat the zip baseline.</p>
+    <p>On a side note though, a fun thought that comes from asking my sister how to compress monkey thoughts:</p>
+    <blockquote>
+        just make it think stupider
+    </blockquote>
+    <p>It makes you realize that Elon probably has monkey ELO rankings, and his random data drop probably has the top
+        5% of monkey thoughts and the worst 5% of monkey thoughts, and the intelligence is all in the wave structure
+        and spikes, not the size, which is also probably why humanity has civilization rather than whales and elephants. "brain scaling laws" are not in the places we look for them</p>
+    <h2 id="compression">compression</h2>
+    <p>the avg thot is 192kb, overall of ~143mb in the whole dataset, and is probably the entire spread of elons
+        monkeys, cause if anyone is cracked enough to make that moonshot, elon is not about to watch it burn because it
+        wont compress enough on some brainwaves/</p>
+    <p>I&#39;m going two really simple strats, both arent really production level compressions, but efficiently compress
+        and show the concepts</p>
+    <ul>
+        <li>compressing large single value groups</li>
+        <li>compression through tokenizing common values/bytes</li>
+    </ul>
+    <p>for context, I got all the binary values of all the files added up and placed in one giant text file so the code
+        behind this is simple enough to be understood by anyone who has manipulated a string and touched python, so the
+        text file made each bit a byte, putting us at 143*8 ~= 1.1gb</p>
+    <p>In the large single value groups, when ever a string like <code>00000000000001</code> shows up, it could be
+        <code>(13x0)1</code> instead.</p>
+    <p>Looking for groups where 90%+ of the block is a single consecutive number gives good results, there are a huge
+        number of blocks that are compressible (more than 9 of the same consecutive values)</p>
+    <p><img src="../images\counting-bits.png" alt="bits consec" width="800px"></p>
+    <p>using just that, we have a 15% reduction in size, losslessly.</p>
+    <p>In tokenization, we find the X most common groups of bytes, and compress them to a byte place holder, like a
+        letter or hex</p>
+    <p>heres some graphs for the most common bytes (1,2, and 4)</p>
+    <p><img src="../images\t20-8bit.png" alt="t20-8bit" width="800px">
+        <img src="../images\t20-16bit.png" alt="t20-16bit" width="800px">
+        <img src="../images\t20-32bit.png" alt="t20-32bit" width="800px">
+    </p>
+    <p>First, I tried replacing the top 20 64 bit sequences with 8 bit char placeholders, and that was a 2mb loss, which
+        was strange, but i suppose there are few repetitions of 64 values, it has to be somewhat rare</p>
+    <p>I tried again with the top 80 32-bit values, represented by a two digit num, so 4 bytes to 2. This worked out
+        alot better, with 62mb lost, dropping us 0.2gb total</p>
+    <p>Now to compare against the baseline, I zipped the original text file I made, then my compressed one. the
+        Compressed zip file is 4-5% smaller, and could be even smaller if I pursued the diminishing returns in
+        tokenization, but im just surprised my extra compression is better than pure zip, considering how optimized and
+        mature zip is in comparision.</p>
+    <h2 id="how-does-neuralink-do-it-">how does neuralink do it?</h2>
+    <p>Neuralink already has 200x compression, buts its really, really lossy. </p>
+    <p>Some graphs from @mikaelhaji show the intense noise that supports the no 200x compression claim:</p>
+    <p><img src="../images\spikes.jpg" alt="neura spikes">
+        <img src="../images\specNoise.jpg" alt="spectogram noise">
+    </p>
+    <p>Lots of noise combined with extreme values is a great way to be incompressible, and theres a little bit of signal
+        in lots of noise.</p>
+    <p>Theres a couple ways to get it:</p>
+    <ul>
+        <li>threshold for spikes in the waves</li>
+        <li>non-linear energy operators (NEOs) to accurately identify and filter out significant spikes</li>
+        <li>supposedly also an on chip algo at a neuralink event</li>
+    </ul>
+    <p>overall, they want the lossless data for something, even though lossy is good enough</p>
+    <h2 id="why-does-neuralink-want-the-200x-compression-conspiracy-theories-">why does neuralink want the 200x
+        compression (conspiracy theories)</h2>
+    <p>Some random conspiracy level thoughts about why this challenge does what it does:</p>
+    <ul>
+        <li>getting a cracked engineneer, 200x compression on mass noise is very skilled, worth having</li>
+        <li>mass data collection, Neuralink is a unique elon data pool at the moment, he has the best capability to
+            measure, store and analyze gamma waves in both animals and humans, could be worth a lot one day</li>
+        <li>some form of Quasi AGI coming from Brain waves in animals? Srsly though, if the neuralink team has mapped
+            out thoughts to actions (probably, considering thats of the entire project), then their large amounts of raw
+            brainwave data, after being tagged to something like optimus, could be sota model in the real world, then
+            proceed to finetune on those top 1% of brainwave activity for that peak trace of focused genius, checkmate
+            humanity from there</li>
+    </ul>
+</body>
+</html>
