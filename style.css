@@ -1,5 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap");
 
+* {
+    margin-left: 10px;
+}
+
 body {
     background-color: #121212;
     color: #cac4c4;
@@ -7,7 +11,6 @@ body {
     font-optical-sizing: auto;
     font-weight: 400;
     font-style: normal;
-    margin: 10px;
 }
 
 a {
