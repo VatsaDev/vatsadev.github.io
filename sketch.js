@@ -1,10 +1,14 @@
 let flock;
+let goldenBoid;
+let themeAudio;
 
-console.log(window.innerWidth, window.innerHeight);
+// Initialize audio
+themeAudio = new Audio('theme.mp3');
+themeAudio.loop = true;
 
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
-  createP("Drag the mouse for more boids.");
+  createP("Catch the special boid for the theme song.");
 
   flock = new Flock();
   // Add an initial set of boids into the system
@@ -12,6 +16,10 @@ function setup() {
     let b = new Boid(width / 2, height / 2);
     flock.addBoid(b);
   }
+  
+  // Create the golden boid
+  goldenBoid = new GoldenBoid(width / 2, height / 2);
+  flock.addBoid(goldenBoid);
 }
 
 function draw() {
@@ -24,25 +32,29 @@ function mouseDragged() {
   flock.addBoid(new Boid(mouseX, mouseY));
 }
 
-// The Nature of Code
-// Daniel Shiffman
-// http://natureofcode.com
-
-// Flock object
-// Does very little, simply manages the array of all the boids
-
-function Flock() {
-  // An array for all the boids
-  this.boids = []; // Initialize the array
+function mousePressed() {
+  if (goldenBoid.contains(mouseX, mouseY)) {
+    if (themeAudio.paused) {
+      themeAudio.play();
+    } else {
+      themeAudio.pause();
+    }
+    goldenBoid.slowDown();
+  }
 }
 
-Flock.prototype.run = function () {
+// Flock object
+function Flock() {
+  this.boids = [];
+}
+
+Flock.prototype.run = function() {
   for (let i = 0; i < this.boids.length; i++) {
-    this.boids[i].run(this.boids); // Passing the entire list of boids to each boid individually
+    this.boids[i].run(this.boids);
   }
 };
 
-Flock.prototype.addBoid = function (b) {
+Flock.prototype.addBoid = function(b) {
   this.boids.push(b);
 };
 
@@ -208,5 +220,42 @@ Boid.prototype.cohesion = function (boids) {
     return this.seek(sum); // Steer towards the location
   } else {
     return createVector(0, 0);
+  }
+};
+
+// GoldenBoid class
+function GoldenBoid(x, y) {
+  Boid.call(this, x, y);
+  this.r = 5.0;
+  this.maxspeed = 10; // Initial speed
+  this.clicked = false;
+}
+
+GoldenBoid.prototype = Object.create(Boid.prototype);
+GoldenBoid.prototype.constructor = GoldenBoid;
+
+GoldenBoid.prototype.render = function() {
+  let theta = this.velocity.heading() + radians(90);
+  fill(255, 0, 255); // Magenta color
+  stroke(218, 165, 32);
+  push();
+  translate(this.position.x, this.position.y);
+  rotate(theta);
+  beginShape();
+  vertex(0, -this.r * 2);
+  vertex(-this.r, this.r * 2);
+  vertex(this.r, this.r * 2);
+  endShape(CLOSE);
+  pop();
+};
+
+GoldenBoid.prototype.contains = function(x, y) {
+  return dist(x, y, this.position.x, this.position.y) < this.r * 2;
+};
+
+GoldenBoid.prototype.slowDown = function() {
+  if (!this.clicked) {
+    this.maxspeed = 4;
+    this.clicked = true;
   }
 };
