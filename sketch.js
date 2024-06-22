@@ -8,7 +8,7 @@ themeAudio.loop = true;
 
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
-  createP("Catch the special boid for the theme song.");
+  createP("The special boid controls the theme song");
 
   flock = new Flock();
   // Add an initial set of boids into the system
@@ -39,7 +39,6 @@ function mousePressed() {
     } else {
       themeAudio.pause();
     }
-    goldenBoid.slowDown();
   }
 }
 
@@ -75,51 +74,38 @@ Boid.prototype.run = function (boids) {
 };
 
 Boid.prototype.applyForce = function (force) {
-  // We could add mass here if we want A = F / M
   this.acceleration.add(force);
 };
 
-// We accumulate a new acceleration each time based on three rules
 Boid.prototype.flock = function (boids) {
-  let sep = this.separate(boids); // Separation
-  let ali = this.align(boids); // Alignment
-  let coh = this.cohesion(boids); // Cohesion
-  // Arbitrarily weight these forces
+  let sep = this.separate(boids);
+  let ali = this.align(boids);
+  let coh = this.cohesion(boids);
   sep.mult(1.5);
   ali.mult(1.0);
   coh.mult(1.0);
-  // Add the force vectors to acceleration
   this.applyForce(sep);
   this.applyForce(ali);
   this.applyForce(coh);
 };
 
-// Method to update location
 Boid.prototype.update = function () {
-  // Update velocity
   this.velocity.add(this.acceleration);
-  // Limit speed
   this.velocity.limit(this.maxspeed);
   this.position.add(this.velocity);
-  // Reset accelertion to 0 each cycle
   this.acceleration.mult(0);
 };
 
-// A method that calculates and applies a steering force towards a target
-// STEER = DESIRED MINUS VELOCITY
 Boid.prototype.seek = function (target) {
-  let desired = p5.Vector.sub(target, this.position); // A vector pointing from the location to the target
-  // Normalize desired and scale to maximum speed
+  let desired = p5.Vector.sub(target, this.position);
   desired.normalize();
   desired.mult(this.maxspeed);
-  // Steering = Desired minus Velocity
   let steer = p5.Vector.sub(desired, this.velocity);
-  steer.limit(this.maxforce); // Limit to maximum steering force
+  steer.limit(this.maxforce);
   return steer;
 };
 
 Boid.prototype.render = function () {
-  // Draw a triangle rotated in the direction of velocity
   let theta = this.velocity.heading() + radians(90);
   fill(211, 136, 226);
   stroke(170, 136, 255);
@@ -134,7 +120,6 @@ Boid.prototype.render = function () {
   pop();
 };
 
-// Wraparound
 Boid.prototype.borders = function () {
   if (this.position.x < -this.r) this.position.x = width + this.r;
   if (this.position.y < -this.r) this.position.y = height + this.r;
@@ -142,33 +127,24 @@ Boid.prototype.borders = function () {
   if (this.position.y > height + this.r) this.position.y = -this.r;
 };
 
-// Separation
-// Method checks for nearby boids and steers away
 Boid.prototype.separate = function (boids) {
   let desiredseparation = 25.0;
   let steer = createVector(0, 0);
   let count = 0;
-  // For every boid in the system, check if it's too close
   for (let i = 0; i < boids.length; i++) {
     let d = p5.Vector.dist(this.position, boids[i].position);
-    // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-    if (d > 0 && d < desiredseparation) {
-      // Calculate vector pointing away from neighbor
+    if ((d > 0) && (d < desiredseparation)) {
       let diff = p5.Vector.sub(this.position, boids[i].position);
       diff.normalize();
-      diff.div(d); // Weight by distance
+      diff.div(d);
       steer.add(diff);
-      count++; // Keep track of how many
+      count++;
     }
   }
-  // Average -- divide by how many
   if (count > 0) {
     steer.div(count);
   }
-
-  // As long as the vector is greater than 0
   if (steer.mag() > 0) {
-    // Implement Reynolds: Steering = Desired - Velocity
     steer.normalize();
     steer.mult(this.maxspeed);
     steer.sub(this.velocity);
@@ -177,15 +153,13 @@ Boid.prototype.separate = function (boids) {
   return steer;
 };
 
-// Alignment
-// For every nearby boid in the system, calculate the average velocity
 Boid.prototype.align = function (boids) {
   let neighbordist = 50;
   let sum = createVector(0, 0);
   let count = 0;
   for (let i = 0; i < boids.length; i++) {
     let d = p5.Vector.dist(this.position, boids[i].position);
-    if (d > 0 && d < neighbordist) {
+    if ((d > 0) && (d < neighbordist)) {
       sum.add(boids[i].velocity);
       count++;
     }
@@ -202,22 +176,20 @@ Boid.prototype.align = function (boids) {
   }
 };
 
-// Cohesion
-// For the average location (i.e. center) of all nearby boids, calculate steering vector towards that location
 Boid.prototype.cohesion = function (boids) {
   let neighbordist = 50;
-  let sum = createVector(0, 0); // Start with empty vector to accumulate all locations
+  let sum = createVector(0, 0);
   let count = 0;
   for (let i = 0; i < boids.length; i++) {
     let d = p5.Vector.dist(this.position, boids[i].position);
-    if (d > 0 && d < neighbordist) {
-      sum.add(boids[i].position); // Add location
+    if ((d > 0) && (d < neighbordist)) {
+      sum.add(boids[i].position);
       count++;
     }
   }
   if (count > 0) {
     sum.div(count);
-    return this.seek(sum); // Steer towards the location
+    return this.seek(sum);
   } else {
     return createVector(0, 0);
   }
@@ -227,8 +199,8 @@ Boid.prototype.cohesion = function (boids) {
 function GoldenBoid(x, y) {
   Boid.call(this, x, y);
   this.r = 5.0;
-  this.maxspeed = 10; // Initial speed
-  this.clicked = false;
+  this.baseSpeed = 10;
+  this.maxspeed = this.baseSpeed;
 }
 
 GoldenBoid.prototype = Object.create(Boid.prototype);
@@ -236,7 +208,7 @@ GoldenBoid.prototype.constructor = GoldenBoid;
 
 GoldenBoid.prototype.render = function() {
   let theta = this.velocity.heading() + radians(90);
-  fill(255, 0, 255); // Magenta color
+  fill(255, 0, 255); // Gold color
   stroke(218, 165, 32);
   push();
   translate(this.position.x, this.position.y);
@@ -253,9 +225,28 @@ GoldenBoid.prototype.contains = function(x, y) {
   return dist(x, y, this.position.x, this.position.y) < this.r * 2;
 };
 
-GoldenBoid.prototype.slowDown = function() {
-  if (!this.clicked) {
-    this.maxspeed = 4;
-    this.clicked = true;
+GoldenBoid.prototype.flock = function(boids) {
+  let sep = this.separate(boids);
+  let ali = this.align(boids);
+  let coh = this.cohesion(boids);
+  sep.mult(1.5);
+  ali.mult(1.0);
+  coh.mult(1.0);
+  this.applyForce(sep);
+  this.applyForce(ali);
+  this.applyForce(coh);
+
+  // Count nearby boids
+  let nearbyBoids = 0;
+  let crowdDist = 50;
+  for (let i = 0; i < boids.length; i++) {
+    let d = p5.Vector.dist(this.position, boids[i].position);
+    if (d > 0 && d < crowdDist) {
+      nearbyBoids++;
+    }
   }
+
+  // Adjust speed based on nearby boids
+  this.maxspeed = map(nearbyBoids, 0, 20, this.baseSpeed, 0.5);
+  this.maxspeed = constrain(this.maxspeed, 0.5, this.baseSpeed);
 };
