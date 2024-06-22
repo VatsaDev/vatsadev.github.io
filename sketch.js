@@ -208,8 +208,7 @@ GoldenBoid.prototype.constructor = GoldenBoid;
 
 GoldenBoid.prototype.render = function() {
   let theta = this.velocity.heading() + radians(90);
-  fill(255, 0, 255); // Gold color
-  stroke(218, 165, 32);
+  fill(255, 0, 255);
   push();
   translate(this.position.x, this.position.y);
   rotate(theta);
