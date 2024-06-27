@@ -62,7 +62,7 @@
 </ul>
 <h2 id="introduction">Introduction</h2>
 <p>This post details my experiments on whether Transformers with more thin layers are better than Transformers with fewer wide layers. I tested 5 different configurations to conclude that an optimal ratio between is the best config, and in my experiments, 4 layers with an <code>embd_dim</code> of 1024 worked the best.</p>
-<p>I&#39;m basing the layer width off of <a href="https://arxiv.org/abs/2210.00640">Wide Attention is the way forward for Transformers</a>, which widens the layer through the FFN width, which is part of the MLP. The MLPs here are 2 linear layers with a GeLU activation in the middle, both input/output layers have $4*embd^2$ parameters, So widening or thinning out a layer has extra effects, and that extra effect is the curse of dimensionality, or how changing the <code>embd_dim</code> values changes the sizes of the input and intermediate vectors, which changes how much a model can learn, but I don&#39;t think that this is a big issue, considering that tiny shakespeare is a small dataset and all my vectors are at least at a value over 100, the model can superposition the data just fine.</p>
+<p>I&#39;m basing the layer width off of <a href="https://arxiv.org/abs/2210.00640">Wide Attention is the way forward for Transformers</a>, which widens the layer through the FFN width, which is part of the MLP. The MLPs here are 2 linear layers with a GeLU activation in the middle, both input/output layers have \(4*embd^2\) parameters, So widening or thinning out a layer has extra effects, and that extra effect is the curse of dimensionality, or how changing the <code>embd_dim</code> values changes the sizes of the input and intermediate vectors, which changes how much a model can learn, but I don&#39;t think that this is a big issue, considering that tiny shakespeare is a small dataset and all my vectors are at least at a value over 100, the model can superposition the data just fine.</p>
 <p>I had one error that resulted in me having to use a different <code>n_head</code> value, the <code>sm_80 != sm_90</code>, which fixes for transformers when the number of heads is a power of 2, and 2 heads decided to not work for the last two configs, but 4 heads did.</p>
 <p>The code is available at this <a href="https://github.com/VatsaDev/layersVdimension">github repo</a>, and I used this <a href="https://www.kaggle.com/code/vatsadev/layersexperiment">Kaggle nb</a> to run experiments.</p>
 <h2 id="theory">Theory</h2>
@@ -76,7 +76,7 @@
 <p>All the models are vanilla transformers trained from scratch, each config is parameter equivalent (50M parameters), and each run is terminated if overfitting <sub><a href="#foot1">[1]</a></sub></p>
 <p>Here&#39;s the loss graph with each config&#39;s losses and final loss:</p>
 <p><img src="../images/layersGraph.png" alt="Loss chart on different configs"></p>
-<p>Here&#39;s the configs themselves, every term is in the $2^x$ format <sub><a href="#foot2">[2]</a></sub>:</p>
+<p>Here&#39;s the configs themselves, every term is in the \(2^x\) format <sub><a href="#foot2">[2]</a></sub>:</p>
 <table>
 <thead>
 <tr>
@@ -133,7 +133,7 @@
 </table>
 <p>We can mathematically resent the relation between embd and layers as</p>
 
-<p>$\text{embd}^2 \propto \frac{1}{\text{n\_layers}}$</p> 
+<p>\(\text{embd}^2 \propto \frac{1}{\text{n\_layers}}\)</p> 
         
 <p>So every halving of the <code>embd_dim</code> is a 4x increase for <code>n_layers</code></p>
 <p>Another way to represent the configs is this:</p>
@@ -247,7 +247,7 @@
 </code></pre>
 <p><span id="foot1">1.</span> overfitting is determined by checking the Val loss over 750 steps, if its increasing or remaining the same over time while train loss drops, its considered overfit and terminated</p>
 <p><span id="foot2">2.</span> Everything is a power of 2, for both <a href="https://x.com/karpathy/status/1621578354024677377">NN training speed</a>, and during tensor initialization everything is divisible.</p>
-<p><span id="foot3">3.</span> Val loss was evaluated every 250 steps, and tends to remain a decent amount higher than train loss the whole time ($\approx 0.1-0.2$), but that’s most likely due to the Val loss taking up specific parts shakespeare plays during shuffles, a small dataset issue.</p>
+<p><span id="foot3">3.</span> Val loss was evaluated every 250 steps, and tends to remain a decent amount higher than train loss the whole time (\(\approx 0.1-0.2)\), but that’s most likely due to the Val loss taking up specific parts shakespeare plays during shuffles, a small dataset issue.</p>
 <p><span id="foot4">4.</span> I genuinely have no idea what happened here, but I was using the 65 TFLOP fp16 value on a T4 gpu, and this is what I got.</p>
 
     </body>
