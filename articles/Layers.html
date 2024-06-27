@@ -13,7 +13,7 @@
         />
         <link
             rel="shortcut icon"
-            href="../../images/Favicon.png"
+            href="../images/Favicon.png"
             type="image/x-icon"
         />
         <link
@@ -132,10 +132,10 @@
 </tr>
 </tbody>
 </table>
-<p>We can mathematically represent the relation between embd and layers as</p>
-<pre><code class="lang-math">
-<span class="hljs-tag">\<span class="hljs-name">text</span><span class="hljs-string">{embd}</span></span>^2 <span class="hljs-tag">\<span class="hljs-name">propto</span></span> <span class="hljs-tag">\<span class="hljs-name">frac</span><span class="hljs-string">{1}</span><span class="hljs-string">{\text{n\_layers}</span></span>}
-</code></pre>
+<p>We can mathematically resent the relation between embd and layers as</p>
+
+<p>$\text{embd}^2 \propto \frac{1}{\text{n\_layers}}$</p> 
+        
 <p>So every halving of the <code>embd_dim</code> is a 4x increase for <code>n_layers</code></p>
 <p>Another way to represent the configs is this:</p>
 <p><img src="../images/optimumGraph.png" alt="Embd vs loss"></p>
