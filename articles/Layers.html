@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Whats better: Neural nets wider with less layers or thinner with more layers</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+        <link
+            rel="shortcut icon"
+            href="../images/Favicon.png"
+            type="image/x-icon"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"
+            integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv"
+            crossorigin="anonymous"
+        />
+
+        <!-- The loading of KaTeX is deferred to speed up page rendering -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"
+            integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- To automatically render math in text elements, include the auto-render extension: -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js"
+            integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF"
+            crossorigin="anonymous"
+            onload="renderMathInElement(document.body);"
+        ></script>
+    </head>
+
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+        <!-- and it's easy to individually load additional languages -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+
+        <script>
+            hljs.highlightAll();
+        </script>
+        <h1 id="whats-better-neural-nets-wider-with-less-layers-or-thinner-with-more-layers">Whats better: Neural nets wider with less layers or thinner with more layers</h1>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#theory">Theory</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#conclusion">conclusion</a></li>
+<li><a href="#citations">citations</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This post details my experiments on whether Transformers with more thin layers are better than Transformers with fewer wide layers. I tested 5 different configurations to conclude that an optimal ratio between is the best config, and in my experiments, 4 layers with an <code>embd_dim</code> of 1024 worked the best.</p>
+<p>I&#39;m basing the layer width off of <a href="https://arxiv.org/abs/2210.00640">Wide Attention is the way forward for Transformers</a>, which widens the layer through the FFN width, which is part of the MLP. The MLPs here are 2 linear layers with a GeLU activation in the middle, both input/output layers have $4*embd^2$ parameters, So widening or thinning out a layer has extra effects, and that extra effect is the curse of dimensionality, or how changing the <code>embd_dim</code> values changes the sizes of the input and intermediate vectors, which changes how much a model can learn, but I don&#39;t think that this is a big issue, considering that tiny shakespeare is a small dataset and all my vectors are at least at a value over 100, the model can superposition the data just fine.</p>
+<p>I had one error that resulted in me having to use a different <code>n_head</code> value, the <code>sm_80 != sm_90</code>, which fixes for transformers when the number of heads is a power of 2, and 2 heads decided to not work for the last two configs, but 4 heads did.</p>
+<p>The code is available at this <a href="https://github.com/VatsaDev/layersVdimension">github repo</a>, and I used this <a href="https://www.kaggle.com/code/vatsadev/layersexperiment">Kaggle nb</a> to run experiments.</p>
+<h2 id="theory">Theory</h2>
+<p>More Layers is better comes from the evidence that with more layers, you can have deeper representations. Popular examples include Anthropic&#39;s <a href="https://distill.pub/2017/feature-visualization/">visualizing features</a>, or the <a href="https://arxiv.org/abs/2403.05846">Diffusion lens</a> paper.</p>
+<p><img src="images/features.png" alt="Feature sophistication"></p>
+<p><img src="images/layersDetail.png" alt="layer representations"></p>
+<p><em>Some examples of the more layers = more sophisticated representation argument</em></p>
+<p>Many took that to mean picking layers over layer width in most cases, but I don&#39;t think that would work at all. The more layers only work because there&#39;s more MLPs there.</p>
+<p>Trading the parameters of big MLPs in wide layers for extra smaller MLPs in more layers would have a detrimental effect at some point, and these experiments give out an idea of where.</p>
+<h2 id="results">Results</h2>
+<p>All the models are vanilla transformers trained from scratch, each config is parameter equivalent (50M parameters), and each run is terminated if overfitting <sub><a href="#foot1">[1]</a></sub></p>
+<p>Here&#39;s the loss graph with each config&#39;s losses and final loss:</p>
+<p><img src="images/layersGraph.png" alt="Loss chart on different configs"></p>
+<p>Here&#39;s the configs themselves, every term is in the $2^x$ format <sub><a href="#foot2">[2]</a></sub>:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th><code>n_head</code></th>
+<th><code>n_layer</code></th>
+<th><code>embd_dim</code></th>
+<th>Final Train loss</th>
+<th>Final Val loss <sub><a href="#foot3">[3]</a></sub></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 (Purple)</td>
+<td>2</td>
+<td>1</td>
+<td>2048</td>
+<td>1.59</td>
+<td>1.673</td>
+</tr>
+<tr>
+<td>2 (Blue)</td>
+<td>2</td>
+<td>4</td>
+<td>1024</td>
+<td>0.84</td>
+<td>0.953</td>
+</tr>
+<tr>
+<td>3 (Pink)</td>
+<td>2</td>
+<td>16</td>
+<td>512</td>
+<td>0.95</td>
+<td>1.103</td>
+</tr>
+<tr>
+<td>4 (Orange)</td>
+<td>4</td>
+<td>64</td>
+<td>256</td>
+<td>1.06</td>
+<td>1.245</td>
+</tr>
+<tr>
+<td>5 (Red)</td>
+<td>4</td>
+<td>256</td>
+<td>128</td>
+<td>1.37</td>
+<td>1.467</td>
+</tr>
+</tbody>
+</table>
+<p>We can mathematically represent the relation between embd and layers as</p>
+<pre><code class="lang-math">
+<span class="hljs-tag">\<span class="hljs-name">text</span><span class="hljs-string">{embd}</span></span>^2 <span class="hljs-tag">\<span class="hljs-name">propto</span></span> <span class="hljs-tag">\<span class="hljs-name">frac</span><span class="hljs-string">{1}</span><span class="hljs-string">{\text{n\_layers}</span></span>}
+</code></pre>
+<p>So every halving of the <code>embd_dim</code> is a 4x increase for <code>n_layers</code></p>
+<p>Another way to represent the configs is this:</p>
+<p><img src="images/optimumGraph.png" alt="Embd vs loss"></p>
+<p>Comparing embd_dim vs loss, you see that the best spot is the balanced config, with a couple of layers and a medium sized <code>embd_dim</code></p>
+<p>A good example of Config 2 at scale is probably Llama 3 8b, which has an embd_dim 4096 and a vocab_size 128k, with 32 layers.</p>
+<p>The embd_dim is high enough to learn lots of the 15 trillion tokens of data it was fed, while 32 layers is enough to make some good internal representations of that data.</p>
+<p>Llama 3 70b is the even better version, with 80 layers to make representations with, this model is the one really making use of the 15 trillion tokens. </p>
+<p>If Meta ever releases L3 400B, that would be interesting in terms of probably having 100+ layers, wonder if it has too many layers for its embedding dimensions.</p>
+<p>Here&#39;s some other data per config:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>Initial loss</th>
+<th>time/step</th>
+<th>MFU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>4.7</td>
+<td>600ms</td>
+<td>255%<sub><a href="#foot4">[4]</a></sub></td>
+</tr>
+<tr>
+<td>2</td>
+<td>4.2</td>
+<td>1000ms</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>3</td>
+<td>4.4</td>
+<td>700ms</td>
+<td>9%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4.3</td>
+<td>750ms</td>
+<td>7%</td>
+</tr>
+<tr>
+<td>5</td>
+<td>4.17</td>
+<td>3000ms</td>
+<td>2.5%</td>
+</tr>
+</tbody>
+</table>
+<p>Extra layers have some effect on decreasing the initial loss, but it’s not worth it in comparison to the extra amount of time for initialization per extra layer. Config 1 finished compiling in a minute, but Config 5 took half an hour, and the MFU is ruined with that many layers.</p>
+<p>I expected the 4 attention heads to help with loss, but they had a mediocre comparative loss against the 2 head models.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>My experiments show that finding a balance in Transformer models, with a moderate number of layers and an intermediate embedding dimension, works best. Testing five different setups, each with 50 million parameters, revealed that a model with four layers and an embedding dimension of 1024 (Config 2) had the lowest final validation loss. While deeper models can give more detailed feature representations, adding too many layers, as seen in Configs 4 and 5, leads to diminishing returns and higher computational costs without much improvement. The results highlight the need to strike a good balance between layer depth and width for better efficiency and performance.</p>
+<p>I&#39;d personally find the results for SSMs like RWKV/Mamba interesting, considering their &quot;state space representations&quot; </p>
+<h2 id="citations">Citations</h2>
+<pre><code class="lang-tex">
+@misc{brown2022wideattentionwayforward,
+
+      <span class="hljs-attr">title={Wide</span> Attention Is The Way Forward For Transformers?},
+
+      <span class="hljs-attr">author={Jason</span> Ross Brown <span class="hljs-literal">and</span> Yiren Zhao <span class="hljs-literal">and</span> Ilia Shumailov <span class="hljs-literal">and</span> Robert D Mullins},
+
+      <span class="hljs-attr">year={2022},</span>
+
+      <span class="hljs-attr">eprint={2210.00640},</span>
+
+      <span class="hljs-attr">archivePrefix={arXiv},</span>
+
+      <span class="hljs-attr">primaryClass={cs.LG}</span>
+
+      <span class="hljs-attr">url={https://arxiv.org/abs/2210.00640},</span>
+
+}
+
+@article{olah2017feature,
+
+  <span class="hljs-attr">author</span> = {Olah, Chris <span class="hljs-literal">and</span> Mordvintsev, Alexander <span class="hljs-literal">and</span> Schubert, Ludwig},
+
+  <span class="hljs-attr">title</span> = {Feature Visualization},
+
+  <span class="hljs-attr">journal</span> = {Distill},
+
+  <span class="hljs-attr">year</span> = {<span class="hljs-number">2017</span>},
+
+  <span class="hljs-attr">note</span> = {https://distill.pub/<span class="hljs-number">2017</span>/feature-visualization},
+
+  <span class="hljs-attr">doi</span> = {<span class="hljs-number">10.23915</span>/distill.<span class="hljs-number">00007</span>}
+
+}
+
+@misc{toker2024diffusionlensinterpretingtext,
+
+      <span class="hljs-attr">title={Diffusion</span> Lens: Interpreting Text Encoders <span class="hljs-keyword">in</span> Text-to-Image Pipelines},
+
+      <span class="hljs-attr">author={Michael</span> Toker <span class="hljs-literal">and</span> Hadas Orgad <span class="hljs-literal">and</span> Mor Ventura <span class="hljs-literal">and</span> Dana Arad <span class="hljs-literal">and</span> Yonatan Belinkov},
+
+      <span class="hljs-attr">year={2024},</span>
+
+      <span class="hljs-attr">eprint={2403.05846},</span>
+
+      <span class="hljs-attr">archivePrefix={arXiv},</span>
+
+      <span class="hljs-attr">primaryClass={cs.CV}</span>
+
+      <span class="hljs-attr">url={https://arxiv.org/abs/2403.05846},</span>
+
+}
+</code></pre>
+<p><span id="foot1">1.</span> overfitting is determined by checking the Val loss over 750 steps, if its increasing or remaining the same over time while train loss drops, its considered overfit and terminated</p>
+<p><span id="foot2">2.</span> Everything is a power of 2, for both <a href="https://x.com/karpathy/status/1621578354024677377">NN training speed</a>, and during tensor initialization everything is divisible.</p>
+<p><span id="foot3">3.</span> Val loss was evaluated every 250 steps, and tends to remain a decent amount higher than train loss the whole time ($\approx 0.1-0.2$), but that’s most likely due to the Val loss taking up specific parts shakespeare plays during shuffles, a small dataset issue.</p>
+<p><span id="foot4">4.</span> I genuinely have no idea what happened here, but I was using the 65 TFLOP fp16 value on a T4 gpu, and this is what I got.</p>
+
+    </body>
+</html>
