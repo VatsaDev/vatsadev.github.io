@@ -73,10 +73,10 @@
 <p>Many took that to mean picking layers over layer width in most cases, but I don&#39;t think that would work at all. The more layers only work because there&#39;s more MLPs there.</p>
 <p>Trading the parameters of big MLPs in wide layers for extra smaller MLPs in more layers would have a detrimental effect at some point, and these experiments give out an idea of where.</p>
 <h2 id="results">Results</h2>
-<p>All the models are vanilla transformers trained from scratch, each config is parameter equivalent (50M parameters), and each run is terminated if overfitting <sub><a href="#foot1">[1]</a></sub></p>
+<p>All the models are vanilla transformers trained from scratch, each config is parameter equivalent (50M parameters), and each run is terminated if overfitting <sup><a href="#foot1">[1]</a></sup></p>
 <p>Here&#39;s the loss graph with each config&#39;s losses and final loss:</p>
 <p><img src="../images/layersGraph.png" alt="Loss chart on different configs"></p>
-<p>Here&#39;s the configs themselves, every term is in the \(2^x\) format <sub><a href="#foot2">[2]</a></sub>:</p>
+<p>Here&#39;s the configs themselves, every term is in the \(2^x\) format <sup><a href="#foot2">[2]</a></sup>:</p>
 <table>
 <thead>
 <tr>
@@ -85,7 +85,7 @@
 <th><code>n_layer</code></th>
 <th><code>embd_dim</code></th>
 <th>Final Train loss</th>
-<th>Final Val loss <sub><a href="#foot3">[3]</a></sub></th>
+<th>Final Val loss <sup><a href="#foot3">[3]</a></sup></th>
 </tr>
 </thead>
 <tbody>
@@ -158,7 +158,7 @@
 <td>1</td>
 <td>4.7</td>
 <td>600ms</td>
-<td>255%<sub><a href="#foot4">[4]</a></sub></td>
+<td>255%<sup><a href="#foot4">[4]</a></sup></td>
 </tr>
 <tr>
 <td>2</td>
