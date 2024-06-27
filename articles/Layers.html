@@ -13,7 +13,7 @@
         />
         <link
             rel="shortcut icon"
-            href="../images/Favicon.png"
+            href="../../images/Favicon.png"
             type="image/x-icon"
         />
         <link
@@ -68,15 +68,15 @@
 <p>The code is available at this <a href="https://github.com/VatsaDev/layersVdimension">github repo</a>, and I used this <a href="https://www.kaggle.com/code/vatsadev/layersexperiment">Kaggle nb</a> to run experiments.</p>
 <h2 id="theory">Theory</h2>
 <p>More Layers is better comes from the evidence that with more layers, you can have deeper representations. Popular examples include Anthropic&#39;s <a href="https://distill.pub/2017/feature-visualization/">visualizing features</a>, or the <a href="https://arxiv.org/abs/2403.05846">Diffusion lens</a> paper.</p>
-<p><img src="images/features.png" alt="Feature sophistication"></p>
-<p><img src="images/layersDetail.png" alt="layer representations"></p>
+<p><img src="../images/features.png" alt="Feature sophistication"></p>
+<p><img src="../images/layersDetail.png" alt="layer representations"></p>
 <p><em>Some examples of the more layers = more sophisticated representation argument</em></p>
 <p>Many took that to mean picking layers over layer width in most cases, but I don&#39;t think that would work at all. The more layers only work because there&#39;s more MLPs there.</p>
 <p>Trading the parameters of big MLPs in wide layers for extra smaller MLPs in more layers would have a detrimental effect at some point, and these experiments give out an idea of where.</p>
 <h2 id="results">Results</h2>
 <p>All the models are vanilla transformers trained from scratch, each config is parameter equivalent (50M parameters), and each run is terminated if overfitting <sub><a href="#foot1">[1]</a></sub></p>
 <p>Here&#39;s the loss graph with each config&#39;s losses and final loss:</p>
-<p><img src="images/layersGraph.png" alt="Loss chart on different configs"></p>
+<p><img src="../images/layersGraph.png" alt="Loss chart on different configs"></p>
 <p>Here&#39;s the configs themselves, every term is in the $2^x$ format <sub><a href="#foot2">[2]</a></sub>:</p>
 <table>
 <thead>
@@ -138,7 +138,7 @@
 </code></pre>
 <p>So every halving of the <code>embd_dim</code> is a 4x increase for <code>n_layers</code></p>
 <p>Another way to represent the configs is this:</p>
-<p><img src="images/optimumGraph.png" alt="Embd vs loss"></p>
+<p><img src="../images/optimumGraph.png" alt="Embd vs loss"></p>
 <p>Comparing embd_dim vs loss, you see that the best spot is the balanced config, with a couple of layers and a medium sized <code>embd_dim</code></p>
 <p>A good example of Config 2 at scale is probably Llama 3 8b, which has an embd_dim 4096 and a vocab_size 128k, with 32 layers.</p>
 <p>The embd_dim is high enough to learn lots of the 15 trillion tokens of data it was fed, while 32 layers is enough to make some good internal representations of that data.</p>
