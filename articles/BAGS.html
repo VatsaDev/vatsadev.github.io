@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DKFJQDBVVF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-DKFJQDBVVF');
+</script>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>The effects of Grad_Acc and Batch_Size</title>
+        <link
+            rel="stylesheet"
+            href="../style.css"
+            type="text/css"
+            media="all"
+        />
+        <link
+            rel="shortcut icon"
+            href="../images/Favicon.png"
+            type="image/x-icon"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"
+            integrity="sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv"
+            crossorigin="anonymous"
+        />
+    </head>
+
+    <body>
+          <!-- The loading of KaTeX is deferred to speed up page rendering -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"
+            integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O"
+            crossorigin="anonymous"
+        ></script>
+
+        <!-- To automatically render math in text elements, include the auto-render extension: -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js"
+            integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF"
+            crossorigin="anonymous"
+            onload="renderMathInElement(document.body);"
+        ></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+        <!-- and it's easy to individually load additional languages -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+
+        <script>
+            hljs.highlightAll();
+        </script>
+        <h1 id="the-effects-of-grad_acc-and-batch_size">The effects of Grad_Acc and Batch_Size</h1>
+<ul>
+<li><a href="#Introduction">Introduction</a></li>
+<li><a href="#Theory">Theory</a></li>
+<li><a href="#Experiments">Experiments and Jaccard similarity</a></li>
+<li><a href="##Stability-Instability">Stability and Instability</a></li>
+<li><a href="#Conclusion">Conclusion</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This is a quick set of experiments I did before being exiled to Colorado for a week, based on the large number of <a href="https://www.reddit.com/r/LocalLLaMA">r/locallama</a> users who seem to think that batch_size and gradient accumulation are these different things that fundamentally change the model. </p>
+<p>I show 5 configs with different Batch_Size and Grad_Acc values, proving the weights the same through Jaccard similarity, then move on to show that Batch_Size should always be maxed out before you start using Grad_Acc, if you care about stability.</p>
+<h2 id="theory">Theory</h2>
+<p>Gradient accumulation and batch size are mathematically equivalent</p>
+<p>Large batch size: compute all the loss and gradients simultaneously, average it out, update model</p>
+<p>Large grad accumulation: compute loss and gradients in minibatches, no model update until model has accumulated enough gradients, then avg them and update, or in other words, the same stuff in a different order</p>
+<h2 id="experiments">Experiments</h2>
+<p>Reference material:
+<a href="https://www.kaggle.com/code/vatsadev/bsvga">kaggle nb</a>
+<a href="https://github.com/VatsaDev/BSvGA">github</a>
+<a href="https://huggingface.co/VatsaDev/BSvGA">model weights</a></p>
+<p>every model is 12.6M params, each config is 65K toks/s</p>
+<p>config table:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>Batch Size</th>
+<th>Grad Accum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Config 1</td>
+<td>256</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Config 2</td>
+<td>128</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Config 3</td>
+<td>64</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Config 4</td>
+<td>32</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Config 5</td>
+<td>16</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+<p>all the stats:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>final train loss</th>
+<th>mfu</th>
+<th>step time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Config 1</td>
+<td>0.7116</td>
+<td>4.5%</td>
+<td>370ms</td>
+</tr>
+<tr>
+<td>Config 2</td>
+<td>0.7161</td>
+<td>5.1%</td>
+<td>330ms</td>
+</tr>
+<tr>
+<td>Config 3</td>
+<td>0.7151</td>
+<td>4.8%</td>
+<td>350ms</td>
+</tr>
+<tr>
+<td>Config 4</td>
+<td>0.699</td>
+<td>5%</td>
+<td>350ms</td>
+</tr>
+<tr>
+<td>Config 5</td>
+<td>0.710</td>
+<td>4.5%</td>
+<td>400ms</td>
+</tr>
+</tbody>
+</table>
+<p>As we see, overall, all the stats are really similar for each config, nothing special in changing the Batch_Size or Grad_Acc.</p>
+<h2 id="jaccard">Jaccard</h2>
+<p>Time for the real question, are the weights the same???</p>
+<p>I used Jaccard similarity on the weights, and yeah they are the same:</p>
+<p>from <em>jacc_sim.py</em></p>
+<pre><code><span class="hljs-symbol">The</span> similarity <span class="hljs-keyword">between </span>the two files <span class="hljs-built_in">f1</span> <span class="hljs-keyword">and </span><span class="hljs-built_in">f2</span> is: <span class="hljs-number">100</span>.<span class="hljs-number">00</span>%
+<span class="hljs-symbol">The</span> similarity <span class="hljs-keyword">between </span>the two files <span class="hljs-built_in">f2</span> <span class="hljs-keyword">and </span><span class="hljs-built_in">f3</span> is: <span class="hljs-number">100</span>.<span class="hljs-number">00</span>%
+<span class="hljs-symbol">The</span> similarity <span class="hljs-keyword">between </span>the two files <span class="hljs-built_in">f3</span> <span class="hljs-keyword">and </span><span class="hljs-built_in">f4</span> is: <span class="hljs-number">100</span>.<span class="hljs-number">00</span>%
+<span class="hljs-symbol">The</span> similarity <span class="hljs-keyword">between </span>the two files <span class="hljs-built_in">f4</span> <span class="hljs-keyword">and </span><span class="hljs-built_in">f5</span> is: <span class="hljs-number">100</span>.<span class="hljs-number">00</span>%
+<span class="hljs-symbol">The</span> similarity <span class="hljs-keyword">between </span>the two files <span class="hljs-built_in">f5</span> <span class="hljs-keyword">and </span><span class="hljs-built_in">f1</span> is: <span class="hljs-number">100</span>.<span class="hljs-number">00</span>%
+</code></pre><p>the <em>jacc_sim function</em></p>
+<pre><code class="lang-py"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">jaccard_similarity</span><span class="hljs-params">(content1, content2)</span>:</span>
+    <span class="hljs-string">"""Calculates the Jaccard similarity index between two binary contents."""</span>
+    set1 = set(content1)
+    set2 = set(content2)
+
+    intersection = set1.intersection(set2)
+    union = set1.union(set2)
+
+    <span class="hljs-keyword">return</span> len(intersection) / len(union) * <span class="hljs-number">100</span>
+</code></pre>
+<h2 id="stability-instability">Stability-Instability</h2>
+<p>A concern effect from over using Grad_Acc, the loss of training Stability:</p>
+<p><img src="../images/conf1.png" alt="Conf1">
+<img src="../images/conf2.png" alt="Conf2">
+<img src="../images/conf3.png" alt="Conf3">
+<img src="../images/conf4.png" alt="Conf4">
+<img src="../images/conf5.png" alt="Conf5">
+<img src="../images/unstable.png" alt="unstable"></p>
+<p>As you can see, with greater Grad_Acc, the model gets more and more training spikes, and this stuff is not good for your LM if you want to a stable train. For good results, try your best to Max out VRAM then go for a Grad_Acc of 16 or less</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>This study provides empirical evidence that batch size and gradient accumulation are mathematically equivalent in their effects on model training, contrary to some popular beliefs.</p>
+<p>Through a series of experiments with five different configurations, we demonstrated that varying the batch size and gradient accumulation while maintaining a constant tokens-per-second rate results in remarkably similar training outcomes, and that excessive batch_size leads to less stable training runs</p>
+    </body>
+</html>
